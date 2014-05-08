@@ -1868,9 +1868,15 @@ public class ChatView extends LinearLayout {
             return t2 - t1;
         }
 
-        public int getType(int arg0) {
-            // TODO Auto-generated method stub
-            return 0;
+        @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+		public int getType(int arg0) {
+            return mInnerCursor.getType(arg0);
+        }
+
+        @TargetApi(19)
+		@Override
+        public Uri getNotificationUri() {
+            return mInnerCursor.getNotificationUri();
         }
 
     }
