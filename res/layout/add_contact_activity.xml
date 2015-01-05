@@ -22,6 +22,7 @@
     android:layout_height="fill_parent"
     android:orientation="vertical"
     android:padding="6dp"
+    android:background="?listBackground"
     >
 
         <TextView android:id="@+id/choose_list_label"
@@ -34,6 +35,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:drawSelectorOnTop="true"
+        android:padding="3dip"
         android:prompt="@string/choose_list_label" />
     
     
@@ -50,16 +52,21 @@
         android:inputType="textEmailAddress" />
     
 
-    <LinearLayout android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:gravity="right">
-
          <Button android:id="@+id/invite"
               android:layout_marginTop="20dip"
               android:textSize="24sp"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:text="@string/invite_label" />
-    </LinearLayout>
+
+         
+         <Button android:id="@+id/scan"
+              android:layout_marginTop="20dip"
+              android:textSize="24sp"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="@string/menu_scan" />
+         
+         
     
 </LinearLayout>

@@ -18,7 +18,7 @@ import android.util.Log;
 /**
  * This service exists because a foreground service receiving a wakeup alarm from the OS will cause
  * the service process to lose its foreground status and be killed.  This service runs in the UI process instead.
- * 
+ *
  * @author devrandom
  *
  */
@@ -39,6 +39,7 @@ public class HeartbeatService extends Service {
     // Our heartbeat interval in seconds.
     // The user controlled preference heartbeat interval is in these units (i.e. minutes).
     private static final long HEARTBEAT_INTERVAL = 1000 * 60;
+    private long mHeartbeatInterval = HEARTBEAT_INTERVAL;
 
 
     @Override
@@ -47,34 +48,33 @@ public class HeartbeatService extends Service {
         this.mPendingIntent = PendingIntent.getService(this, 0, new Intent(HEARTBEAT_ACTION, null,
                 this, HeartbeatService.class), 0);
         this.mRelayIntent = new Intent(HEARTBEAT_ACTION, null, this, RemoteImService.class);
-        
+
         Imps.ProviderSettings.QueryMap settings = getGlobalSettings();
-        
-        long heartBeatInterval = HEARTBEAT_INTERVAL;
-        
+
         if (settings != null)
         {
-            heartBeatInterval = settings.getHeartbeatInterval();
+            mHeartbeatInterval = settings.getHeartbeatInterval() * HEARTBEAT_INTERVAL;
             settings.close();
         }
-        
-        startHeartbeat(heartBeatInterval);
+
+        startHeartbeat(mHeartbeatInterval);
 
         mServiceHandler = new ServiceHandler();
 
         mNetworkConnectivityListener = new NetworkConnectivityListener();
         NetworkConnectivityListener.registerHandler(mServiceHandler, EVENT_NETWORK_STATE_CHANGED);
         mNetworkConnectivityListener.startListening(this);
-        
-        
+
+
     }
-    
+
     void startHeartbeat(long interval) {
         AlarmManager alarmManager = (AlarmManager)this.getSystemService(ALARM_SERVICE);
         alarmManager.cancel(mPendingIntent);
         if (interval > 0)
         {
-            alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + interval, interval, mPendingIntent);
+            //alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + interval, interval, mPendingIntent);
+            alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + interval, interval, mPendingIntent);
         }
     }
 
@@ -86,16 +86,16 @@ public class HeartbeatService extends Service {
         mNetworkConnectivityListener = null;
         super.onDestroy();
     }
-    
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && HEARTBEAT_ACTION.equals(intent.getAction())) {
-            startHeartbeat(HEARTBEAT_INTERVAL);
+            startHeartbeat(mHeartbeatInterval);
             startService(mRelayIntent);
         }
         return START_STICKY;
     }
-    
+
     @Override
     public IBinder onBind(Intent arg0) {
         return null;
@@ -113,13 +113,13 @@ public class HeartbeatService extends Service {
         // Callback may be async
         if (mNetworkConnectivityListener == null)
             return;
-        
+
         Intent intent = new Intent(NETWORK_STATE_ACTION, null, this, RemoteImService.class);
         intent.putExtra(NETWORK_INFO_EXTRA, mNetworkConnectivityListener.getNetworkInfo());
         intent.putExtra(NETWORK_STATE_EXTRA, mNetworkConnectivityListener.getState().ordinal());
         startService(intent);
     }
-    
+
     private final class ServiceHandler extends Handler {
         public ServiceHandler() {
         }
@@ -136,17 +136,17 @@ public class HeartbeatService extends Service {
             }
         }
     }
-    
+
     private Imps.ProviderSettings.QueryMap getGlobalSettings() {
-                   
+
             ContentResolver contentResolver = getContentResolver();
-            
+
             Cursor cursor = contentResolver.query(Imps.ProviderSettings.CONTENT_URI,new String[] {Imps.ProviderSettings.NAME, Imps.ProviderSettings.VALUE},Imps.ProviderSettings.PROVIDER + "=?",new String[] { Long.toString(Imps.ProviderSettings.PROVIDER_ID_FOR_GLOBAL_SETTINGS)},null);
 
             if (cursor == null)
                 return null;
-            
+
            return new Imps.ProviderSettings.QueryMap(cursor, contentResolver, Imps.ProviderSettings.PROVIDER_ID_FOR_GLOBAL_SETTINGS, true, null);
-    
+
     }
 }

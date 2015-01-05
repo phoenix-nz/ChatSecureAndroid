@@ -39,19 +39,24 @@
 		<string name="btn_next">Next</string>
 		<string name="btn_back">Back</string>
 		<string name="connect">Connect</string>
-		
+		<string name="play">Play</string>
+		<string name="setup">Setup</string>
+
 		<!-- Views -->
 		<string name="lock_screen_open">Open</string>
 		<string name="title_activity_lock_screen">ChatSecure Locked</string>
-		<string name="lock_screen_create_passphrase">Enable App Lock Password</string>
+		<string name="lock_screen_create_passphrase">Set Password</string>
 		<string name="lock_screen_confirm_passphrase">Confirm Password</string>
 		<string name="lock_screen_passphrase_hint">Password</string>
-		<string name="lock_screen_passphrase_not_set_enter">Enter New Password</string>
+		<string name="lock_screen_passphrase_not_set_enter">You can optionally set a master password for ChatSecure to prevent access to your contacts and messages without a password:</string>
 		<string name="lock_screen_passphrase_not_set_confirm">Confirm New Password</string>
 		<string name="lock_screen_passphrases_not_matching">Password did not match, please try again</string>
-		<string name="lock_screen_skip">Continue &gt;&gt;</string>
+		<string name="lock_screen_skip">Skip &gt;&gt;</string>
 		<string name="app_passphrase_view_title_dialog">Information Prompt</string>
 		<string name="app_passphrase_view_password_question">Enter Password Please</string>
+		<string name="password_please">Password please…</string>
+		<string name="passphrase">Passphrase</string>
+		<string name="passphrase_again">Passphrase (again)</string>
 		
 		<!-- Views: Setup -->
 		<string name="landing_page_title">Select an account</string>
@@ -77,7 +82,7 @@
 		<string name="setup_passphrase_label2">Passphrase (again):</string>
 		
 		<string name="rekey_message">Enter a *new* passphrase. It must contain at least one uppercase, one lowercase and one number, and be longer than six characters.</string>
-		<string name="do_rekey">Encrypting your existing notes with the new passphrase (patience...)</string>
+		<string name="do_rekey">Encrypting your existing notes with the new passphrase (patience…)</string>
 		<string name="enter_pass">Enter your passphrase:</string>
 		<string name="new_pass">Welcome! Enter a strong passphrase to secure your notes. It must contain at least one uppercase, one lowercase and one number, and be longer than six characters.</string>
 		<string name="pass_err_length">Your passphrase was not long enough</string>
@@ -146,9 +151,9 @@
 		<string name="account_setup_advanced_enc_req">Encrypt chats as requested</string>
 		<string name="account_setup_advanced_enc_off">Disable chat encryption</string>
 		
-		<string name="account_setup_signin_a">Validating credentials...</string>
-		<string name="account_setup_signin_b">Generating keypair...</string>
-		<string name="account_setup_signin_c">Signing in...</string>
+		<string name="account_setup_signin_a">Validating credentials…</string>
+		<string name="account_setup_signin_b">Generating keypair…</string>
+		<string name="account_setup_signin_c">Signing in…</string>
 		
 		<string name="account_wizard_setup_title">Account Wizard</string>
 		<string name="account_wizard_account_title">Your Account ID</string>
@@ -162,9 +167,9 @@
 		
 		<string name="_via_orbot">"Orbot (Tor)"</string>
 		<string name="select_domain_new_account">Chat service domain</string>
-		<string name="registering_new_account_">Registering new account...</string>
+		<string name="registering_new_account_">Registering new account…</string>
 		
-		<string name="signing_in_to">getting going...</string>
+		<string name="signing_in_to">getting going…</string>
 		<string name="menu_cancel_signin">Cancel signin</string>
 		<string name="signing_in_wait">Signing in\u2026</string>
 		<string name="signing_out_wait">Signing out\u2026</string>
@@ -198,6 +203,7 @@
 		<string name="menu_block_contact">Block Contact</string>
 		<string name="menu_contact_nickname">Contact nickname</string>
 		<string name="menu_view_blocked">Blocked</string>
+		<string name="nickname">Nickname</string>
 		
 		<string name="confirm_delete_contact">The contact \"<xliff:g id="user">%1$s</xliff:g>\" will be deleted.</string>
 		<string name="confirm_block_contact">The contact \"<xliff:g id="user">%1$s</xliff:g>\" will be blocked.</string>
@@ -214,7 +220,7 @@
 		<string name="menu_show_grid">Show Grid</string>
 		<string name="menu_start_chat">Start chat</string>
 		<string name="menu_view_profile">View Profile</string>
-		<string name="menu_verify">Verify Key</string>
+		<string name="menu_verify">Verify Contact</string>
 		
 		<string name="ongoing_conversation">Ongoing chats (<xliff:g id="number">%1$d</xliff:g>)</string>
 		<string name="online_count"><xliff:g id="number">%1$d</xliff:g> online</string>
@@ -255,7 +261,6 @@
 		<string name="contact_offline"><xliff:g id="user">%1$s</xliff:g> is offline</string>
 		<string name="contact_joined"><xliff:g id="user">%1$s</xliff:g> has joined</string>
 		<string name="contact_left"><xliff:g id="user">%1$s</xliff:g> has left</string>
-		<string name="time_stamp" format="date">\'Sent at\' <xliff:g id="hour">hh</xliff:g>:<xliff:g id="minute">mm</xliff:g> <xliff:g id="ampm">a</xliff:g> \'on\' <xliff:g id="date">EEEE</xliff:g></string>
 		
 		<string name="menu_send_image">Send Photo</string>
 		<string name="menu_send_file">Send File</string>
@@ -267,19 +272,34 @@
 		<string name="transfer_in_progress">Transfer in progress</string>
 		<string name="accept_transfer_">Accept transfer?</string>
 		<string name="wants_to_send_you_the_file">wants to send you the file</string>
+		<string name="no_connection_for_sending">No connection available for sending your share!</string>
 		
 		<string name="send">Send</string>
 		<string name="compose_hint">Send a message</string>
 		<string name="compose_hint_secure">Send secure message</string>
 		<string name="menu_resend">Resend</string>
 		<string name="menu_end_conversation">End chat</string>
-		<string name="menu_clear_chat">Clear Chat</string>
+		<string name="menu_clear_chat">Clear chat</string>
 		
 		<string name="menu_insert_smiley">Insert smiley</string>
 		<string name="menu_switch_chats">Switch chats</string>
 		<string name="menu_plus">Menu+</string>
 		<string name="select_link_title">Select link</string>
 		
+        <string name="delete">Delete</string>
+        <string name="keep_files">Keep Files</string>
+        <string name="delete_chat_session_secured_storage">Delete Chat Session Secured Storage?</string>
+        <string name="all_files_will_be_deleted">All the session\'s upload and download files will be permanently deleted. Warning: this operation can not be undone!</string>
+        <string name="delete_original">Delete Original?</string>
+        <string name="this_file_will_be_copied">This file will be copied into the secured storage before being sent.  Would you like to delete the original file from the device\'s unsecured storage?</string>
+        <string name="keep">Keep</string>
+        <string name="export">Export</string>
+        <string name="export_media">Export Media File?</string>
+        <string name="export_media_file_to">This media file will be exported to %1$s</string>
+        <string name="end_chat_title">End chat?</string>
+        <string name="end_chat_summary">All secured media items of this session will be deleted.  Export a media item using a long click on the thumbnail icon.</string>
+        <string name="end_chat_and_delete">End Chat and Delete Files</string>
+        	
 		<!-- Views: Chat: Group -->
 		<string name="invitation_prompt"><xliff:g id="user">%1$s</xliff:g> has invited you to join a group chat.</string>
 		<string name="invitation_sent_prompt"> Invitation has been sent to <xliff:g id="user">%1$s</xliff:g>.</string>
@@ -287,7 +307,7 @@
 		<string name="decline_invitation">Decline</string>
 		<string name="menu_new_group_chat">Group Chat</string>
 		<string name="create_or_join_group_chat">Create or Join Group Chat</string>
-		<string name="connecting_to_group_chat_">Connecting to group chat...</string>
+		<string name="connecting_to_group_chat_">Connecting to group chat…</string>
 		
 		<string name="menu_invite_contact">Invite\u2026</string>
 		<string name="contacts_picker_title">Select contact(s) to invite</string>
@@ -303,8 +323,8 @@
 		<!-- Security: OTR -->
 		<string name="menu_otr_start">Start Encryption</string>
 		<string name="menu_otr_stop">Stop Encryption</string>
-		<string name="starting_otr_chat">Starting encrypted chat session...</string>
-		<string name="stopping_otr_chat">Stopping encrypted chat session...</string>
+		<string name="starting_otr_chat">Starting encrypted chat session…</string>
+		<string name="stopping_otr_chat">Stopping encrypted chat session…</string>
 		<string name="label_fingerprint_remote">Security Fingerprint</string>
 		<string name="label_fingerprint_local">Security Fingerprint</string>
 		<string name="menu_sign_in">Sign In</string>
@@ -313,7 +333,7 @@
 		<string name="otr_session_status_encrypted">Encryption is on (Tap to verify)</string>
 		<string name="otr_session_status_finished">Your contact has stopped the encrypted chat.</string>
 		<string name="otr_session_status_verified">Encrypted and verified!</string>
-		<string name="otr_gen_key">Generating new OTR keypair...</string>
+		<string name="otr_gen_key">Generating new OTR keypair…</string>
 		
 		<!-- Security: OTR: Keyring -->
 		<string name="detected_Otr_keystore_import">We have detected an OTR keystore to import. Would you like to scan the QR password now?</string>
@@ -331,6 +351,8 @@
 		<string name="the_remote_key_fingerprint_has_been_verified_">The remote fingerprint has been verified!</string>
 		<string name="fingerprint_for_you">Fingerprint for you</string>
 		<string name="fingerprint_for_">"Fingerprint for "</string>
+		<string name="install_barcode_scanner_title">Install Barcode Scanner?</string>
+		<string name="install_barcode_scanner_message">This application requires Barcode Scanner. Would you like to install it?</string>
 		
 		<!-- Security: OTR: Verification: QA -->
 		<string name="smp_question_title">Authentication</string>
@@ -362,7 +384,8 @@
 		<string name="pref_group_looknfeel_title">User Interface</string>
 		<string name="menu_locale">Language</string>
 		<string name="KEY_PREF_LANGUAGE_TITLE">Languages</string>
-		<string name="KEY_PREF_LANGUAGE_SUMMARY">What language should InTheClear display?</string>
+		<string name="use_system_default">Use system default</string>
+
 		<string name="pref_theme_dark">Use Dark Theme</string>
 		<string name="pref_theme_dark_summary">Change the app theme to dark</string>
 		<string name="pref_in_memory_db_title">In-Memory Message Storage Only</string>
@@ -372,7 +395,9 @@
 		<string name="pref_show_grid">Show Contact Grid</string>
 		<string name="pref_show_grid_summary">Display contact list as avatar grid</string>
 		<string name="button_yes_accept_all">Yes, Accept All</string>
-		
+        <string name="pref_delete_unsecured_media_title">Delete Insecure Media</string>
+        <string name="pref_delete_unsecured_media_summary">After sharing a photo or file, automatically delete it from the original, insecure storage after import</string>
+				
 		<!-- Actions: Settings: General: Other Tuning -->
 		<string name="pref_group_tuning_title">Other Tuning</string>
 		<string name="start_on_boot">Start ChatSecure Automatically</string>
@@ -391,7 +416,7 @@
 		<string name="notification_vibrate_summary">Also vibrate when IM arrives</string>
 		<string name="notification_sound_title">Sound</string>
 		<string name="notification_sound_summary">Also play ringtone when IM arrives</string>
-		<string name="notification_ringtone_title">Use ChatSecure custom ringtone</string>
+		<string name="notification_ringtone_title">Select Custom Ringtone</string>
 		
 		<!-- Actions: Settings: General: Developer -->
 		<string name="pref_debug_title">Enable Debug Logs</string>
@@ -425,7 +450,7 @@
 		<string name="notify_groupchat_label">Group chat invitation</string>
 		<string name="group_chat_invite_notify_text">New group chat invitation from <xliff:g id="user">%s</xliff:g></string>
 		<string name="new_messages_notify">New message(s) from</string>
-		<string name="starting_the_chatsecure_service_">Starting the ChatSecure service...</string>
+		<string name="starting_the_chatsecure_service_">Starting the ChatSecure service…</string>
 		<string name="app_unlocked">Activated &amp; unlocked</string>
 		<string name="toast_chat_copied_to_clipboard">message copied to the clipboard</string>
 		
@@ -479,6 +504,7 @@
 		<string name="sorry_we_cannot_share_that_file_type">Sorry we cannot share that file type</string>
 		<string name="err_otr_share_no_encryption">You must enable encryption to share files</string>
 		<string name="please_enable_chat_encryption_to_share_files">Please enable chat encryption to share files</string>
+		<string name="unsupported_incoming_data">Unsupported incoming data, cannot share!</string>
 		<string name="swipe_alert">ChatSecure detected that a request was made to remove its task.  ChatSecure will likely crash.  Please use the Sign out all menu item from the account list screen instead.</string>
 		<string name="there_is_no_viewer_available_for_this_file_format">There is no viewer available for this file format</string>
 		<string name="please_start_a_secure_conversation_before_scanning_codes">Please start a secure conversation before scanning codes</string>
@@ -507,8 +533,7 @@
 	 
 	<string name="_open_conversations">" open conversation(s)"</string>
 	 
-	 
-	<string name="menu_exit">Exit</string>
+	<string name="menu_exit">Shutdown &amp; Lock</string>
 			    
 	<string name="menu_panic">Panic</string>
 	<string name="buddies">Buddies</string>
@@ -524,10 +549,10 @@
 	<string name="menu_sidebar_qr">Display Your Fingerprint</string>
     
     
-	<string name="loading">loading...</string>
+	<string name="loading">loading…</string>
 		<!-- Other -->
 		
-		<string name="about_link">About Gibberbot\nhttps://guardianproject.info/apps/chatsecure/</string>
+		<string name="about_link">About ChatSecure\nhttps://guardianproject.info/apps/chatsecure/</string>
 		
 		<!-- Other: Slide Menu -->
 		<string name="menu_contact_list">Contact List</string>
@@ -651,7 +676,7 @@
 			<string name="account_existing_full">Connect to my existing account on a specific Jabber / XMPP server.</string>
 			
 			<string name="i_want_to_chat_using_my_google_account">Google Account </string>
-			<string name="account_google_full">Chat securely with other Google Talk, Google+ or Hangouts users.</string>
+			<string name="account_google_full">Chat with other Google users using your existing Google account.</string>
 			
 			<string name="i_want_to_chat_on_my_local_wifi_network_bonjour_zeroconf_">WiFi Mesh Chat</string>
 			<string name="account_wifi_full">Chat with others on the same local WiFi network or mesh - no Internet or server required!</string>
@@ -671,5 +696,28 @@
 			<string name="_resent_">"[resent] "</string>
 			
 			<string name="resent">"[resent] "</string>
+			
+			<string name="unable_to_securely_share_this_file">Unable to securely share this file</string>
+			
+			<string name="install_orbot_">Install Orbot?</string>
+	
+		<string name="market_orbot">market://details?id=org.torproject.android</string>
+		
+		<string name="you_must_have_orbot">You must have Orbot installed and activated to proxy traffic through it. Would you like to install it?</string>
+		
+		<string name="always">Always</string>
+		
+		<string name="start_orbot_">Start Orbot?</string>
+		
+		<string name="orbot_doesn_t_appear_to_be_running_would_you_like_to_start_it_up_and_connect_to_tor_">Orbot doesn\'t appear to be running. Would you like to start it up and connect to Tor?</string>
+		
+		<string name="muc_dialog_nickname">nickname to use in room</string>
+		<string name="muc_dialog_room">name of room to create or join"</string>
+		<string name="muc_dialog_server">groupchat server (conference.foo.com)</string>
+		<string name="your_keystore_is_corrupted_please_re_install_chatsecure_or_clear_data_for_the_app">Your keystore is corrupted. Please re-install ChatSecure or \'clear data\' for the app</string>
+		<string name="you_received_an_unreadable_encrypted_message">You received an unreadable encrypted message</string>
+		<string name="i_could_not_decrypt_the_message_you_sent">I could not decrypt the message you sent</string>
+		
+		<string name="swipe_hint">&lt; swipe left and right for more options &gt;</string>
 	</resources>
 

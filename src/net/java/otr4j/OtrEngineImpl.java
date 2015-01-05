@@ -1,6 +1,6 @@
 /*
  * otr4j, the open source java otr librar
- * 
+ *
  * Distributable under LGPL license. See terms of license at gnu.org.
  */
 
@@ -29,6 +29,10 @@ public class OtrEngineImpl implements OtrEngine {
             throw new IllegalArgumentException("OtrEgineHost is required.");
 
         this.setHost(host);
+
+        if (sessions == null)
+            sessions = new Hashtable<String, Session>();
+
     }
 
     private OtrEngineHost host;
@@ -39,12 +43,9 @@ public class OtrEngineImpl implements OtrEngine {
         if (sessionID == null || sessionID.equals(SessionID.Empty))
             throw new IllegalArgumentException();
 
-        if (sessions == null)
-            sessions = new Hashtable<String, Session>();
-
-        if (!sessions.containsKey(sessionID.getSessionId())) {
+        if (!sessions.containsKey(sessionID.toString())) {
             Session session = new SessionImpl(sessionID, getHost());
-            sessions.put(sessionID.getSessionId(), session);
+            sessions.put(sessionID.toString(), session);
 
             session.addOtrEngineListener(new OtrEngineListener() {
 
@@ -55,7 +56,11 @@ public class OtrEngineImpl implements OtrEngine {
             });
             return session;
         } else
-            return sessions.get(sessionID.getSessionId());
+        {
+            SessionImpl session = (SessionImpl)sessions.get(sessionID.toString());
+            session.setSessionID(sessionID);//make sure latest instance is stored in session (in case JIDs get updated)
+            return session;
+        }
     }
 
     public SessionStatus getSessionStatus(SessionID sessionID) {
@@ -89,12 +94,14 @@ public class OtrEngineImpl implements OtrEngine {
         return this.getSession(sessionID).transformSending(msgText, tlvs);
     }
 
+
     public void endSession(SessionID sessionID) throws OtrException {
-        this.getSession(sessionID).endSession();
+        getSession(sessionID).endSession();
+        sessions.remove(sessionID.toString());
     }
 
     public void startSession(SessionID sessionID) throws OtrException {
-        this.getSession(sessionID).startSession();
+        this.getSession(sessionID).refreshSession();
     }
 
     private void setHost(OtrEngineHost host) {

@@ -1,11 +1,11 @@
 /*
  * Copyright (C) 2008 Esmertec AG. Copyright (C) 2008 The Android Open Source
  * Project
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
  * * Unless required by applicable law or agreed to in writing, software * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,20 +15,6 @@
 
 package info.guardianproject.otr.app.im.app;
 
-import info.guardianproject.onionkit.ui.OrbotHelper;
-import info.guardianproject.otr.IOtrChatSession;
-import info.guardianproject.otr.app.im.IImConnection;
-import info.guardianproject.otr.app.im.R;
-import info.guardianproject.otr.app.im.engine.ImConnection;
-import info.guardianproject.otr.app.im.plugin.BrandingResourceIDs;
-import info.guardianproject.otr.app.im.plugin.xmpp.XmppConnection;
-import info.guardianproject.otr.app.im.plugin.xmpp.auth.GTalkOAuth2;
-import info.guardianproject.otr.app.im.provider.Imps;
-import info.guardianproject.otr.app.im.provider.Imps.AccountColumns;
-import info.guardianproject.otr.app.im.provider.Imps.AccountStatusColumns;
-import info.guardianproject.otr.app.im.provider.Imps.CommonPresenceColumns;
-import info.guardianproject.otr.app.im.service.ImServiceConstants;
-import info.guardianproject.util.LogCleaner;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -44,6 +30,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
 import android.provider.BaseColumns;
+import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.SpannableString;
 import android.text.TextUtils;
@@ -51,6 +38,9 @@ import android.text.TextWatcher;
 import android.text.util.Linkify;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -63,12 +53,29 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
+import com.google.zxing.integration.android.IntentIntegrator;
 
-public class AccountActivity extends SherlockActivity {
+import info.guardianproject.onionkit.ui.OrbotHelper;
+import info.guardianproject.otr.IOtrChatSession;
+import info.guardianproject.otr.OtrAndroidKeyManagerImpl;
+import info.guardianproject.otr.app.im.IImConnection;
+import info.guardianproject.otr.app.im.R;
+import info.guardianproject.otr.app.im.engine.ImConnection;
+import info.guardianproject.otr.app.im.plugin.BrandingResourceIDs;
+import info.guardianproject.otr.app.im.plugin.xmpp.XmppConnection;
+import info.guardianproject.otr.app.im.plugin.xmpp.auth.GTalkOAuth2;
+import info.guardianproject.otr.app.im.provider.Imps;
+import info.guardianproject.otr.app.im.provider.Imps.AccountColumns;
+import info.guardianproject.otr.app.im.provider.Imps.AccountStatusColumns;
+import info.guardianproject.otr.app.im.provider.Imps.CommonPresenceColumns;
+import info.guardianproject.otr.app.im.service.ImServiceConstants;
+import info.guardianproject.util.LogCleaner;
+import info.guardianproject.util.XmppUriHelper;
+
+import java.util.HashMap;
+import java.util.Locale;
+
+public class AccountActivity extends ActionBarActivity {
 
     public static final String TAG = "AccountActivity";
     private static final String ACCOUNT_URI_KEY = "accountUri";
@@ -83,14 +90,14 @@ public class AccountActivity extends SherlockActivity {
     private static final int ACCOUNT_PROVIDER_COLUMN = 1;
     private static final int ACCOUNT_USERNAME_COLUMN = 2;
     private static final int ACCOUNT_PASSWORD_COLUMN = 3;
-    
+
     public final static String DEFAULT_SERVER_GOOGLE = "talk.l.google.com";
     public final static String DEFAULT_SERVER_FACEBOOK = "chat.facebook.com";
     public final static String DEFAULT_SERVER_JABBERORG = "hermes2.jabber.org";
     public final static String DEFAULT_SERVER_DUKGO = "dukgo.com";
     public final static String ONION_JABBERCCC = "okj7xc6j2szr2y75.onion";
     public final static String ONION_CALYX = "ijeeynrc6x2uy5ob.onion";
-    
+
     //    private static final int ACCOUNT_KEEP_SIGNED_IN_COLUMN = 4;
     //    private static final int ACCOUNT_LAST_LOGIN_STATE = 5;
 
@@ -101,14 +108,14 @@ public class AccountActivity extends SherlockActivity {
     CheckBox mRememberPass;
     CheckBox mUseTor;
     Button mBtnSignIn;
-    Button mBtnDelete;
+    Button mBtnQrDisplay;
     AutoCompleteTextView mSpinnerDomains;
-    
+
     Button mBtnAdvanced;
     TextView mTxtFingerprint;
 
     //Imps.ProviderSettings.QueryMap settings;
-    
+
     boolean isEdit = false;
     boolean isSignedIn = false;
 
@@ -124,27 +131,30 @@ public class AccountActivity extends SherlockActivity {
 
     private boolean mIsNewAccount = false;
 
-    private AsyncTask<String, Void, String> mCreateAccountTask = null;
-    
+    private AsyncTask<Void, Void, String> mCreateAccountTask = null;
+
     @Override
     protected void onCreate(Bundle icicle) {
+
         super.onCreate(icicle);
         Intent i = getIntent();
-        
+
         mApp = (ImApp)getApplication();
 
         String action = i.getAction();
 
         if (i.hasExtra("isSignedIn"))
             isSignedIn = i.getBooleanExtra("isSignedIn", false);
-        
+
 
         final ProviderDef provider;
-        
+
         mSignInHelper = new SignInHelper(this);
         SignInHelper.SignInListener signInListener = new SignInHelper.SignInListener() {
+            @Override
             public void connectedToService() {
             }
+            @Override
             public void stateChanged(int state, long accountId) {
                 if (state == ImConnection.LOGGED_IN)
                 {
@@ -156,12 +166,12 @@ public class AccountActivity extends SherlockActivity {
                 {
                     isSignedIn = false;
                 }
-                
+
             }
         };
-        
+
         mSignInHelper.setSignInListener(signInListener);
-        
+
 
         ContentResolver cr = getContentResolver();
 
@@ -185,7 +195,7 @@ public class AccountActivity extends SherlockActivity {
             mDomain = userpass_host[1];
             mPort = 0;
             final boolean regWithTor = i.getBooleanExtra("useTor", false);
-            
+
             Cursor cursor = openAccountByUsernameAndDomain(cr);
             boolean exists = cursor.moveToFirst();
             long accountId;
@@ -193,7 +203,7 @@ public class AccountActivity extends SherlockActivity {
                 accountId = cursor.getLong(0);
                 mAccountUri = ContentUris.withAppendedId(Imps.Account.CONTENT_URI, accountId);
                 pass = cursor.getString(ACCOUNT_PASSWORD_COLUMN);
-                
+
                 setAccountKeepSignedIn(true);
                 mSignInHelper.activateAccount(mProviderId, accountId);
                 mSignInHelper.signIn(pass, mProviderId, accountId, true);
@@ -201,7 +211,7 @@ public class AccountActivity extends SherlockActivity {
                 cursor.close();
                 finish();
                 return;
-                
+
             } else {
                 mProviderId = helper.createAdditionalProvider(helper.getProviderNames().get(0)); //xmpp FIXME
                 accountId = ImApp.insertOrUpdateAccount(cr, mProviderId, mUserName, pass);
@@ -211,15 +221,15 @@ public class AccountActivity extends SherlockActivity {
                 cursor.close();
                 return;
             }
-           
-           
-        
-            
+
+
+
+
         } else if (Intent.ACTION_INSERT.equals(action)) {
-            
+
 
             setupUIPre();
-            
+
             mOriginalUserAccount = "";
             // TODO once we implement multiple IM protocols
             mProviderId = ContentUris.parseId(uri);
@@ -228,19 +238,19 @@ public class AccountActivity extends SherlockActivity {
             if (provider != null)
             {
                 setTitle(getResources().getString(R.string.add_account, provider.mFullName));
-    
+
             }
             else
             {
                 finish();
             }
 
-            
+
         } else if (Intent.ACTION_EDIT.equals(action)) {
-            
+
 
             setupUIPre();
-            
+
             if ((uri == null) || !Imps.Account.CONTENT_ITEM_TYPE.equals(cr.getType(uri))) {
                 LogCleaner.warn(ImApp.LOG_TAG, "<AccountActivity>Bad data");
                 return;
@@ -280,7 +290,7 @@ public class AccountActivity extends SherlockActivity {
                 mEditPass.setText(cursor.getString(ACCOUNT_PASSWORD_COLUMN));
                 mRememberPass.setChecked(!cursor.isNull(ACCOUNT_PASSWORD_COLUMN));
                 mUseTor.setChecked(settings.getUseTor());
-                mBtnDelete.setVisibility(View.VISIBLE);
+                mBtnQrDisplay.setVisibility(View.VISIBLE);
             } finally {
                 settings.close();
                 cursor.close();
@@ -296,14 +306,18 @@ public class AccountActivity extends SherlockActivity {
        setupUIPost();
 
     }
-    
+
     private void setupUIPre ()
     {
+        ((ImApp)getApplication()).setAppTheme(this);
+
         setContentView(R.layout.account_activity);
-        
+
+        getSupportActionBar().setHomeButtonEnabled(true);
+
         mIsNewAccount = getIntent().getBooleanExtra("register", false);
-        
-        
+
+
         mEditUserAccount = (EditText) findViewById(R.id.edtName);
         mEditUserAccount.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -313,34 +327,34 @@ public class AccountActivity extends SherlockActivity {
         });
 
         mEditPass = (EditText) findViewById(R.id.edtPass);
-        
+
         mEditPassConfirm = (EditText) findViewById(R.id.edtPassConfirm);
         mSpinnerDomains = (AutoCompleteTextView) findViewById(R.id.spinnerDomains);
-        
+
         if (mIsNewAccount)
         {
             mEditPassConfirm.setVisibility(View.VISIBLE);
             mSpinnerDomains.setVisibility(View.VISIBLE);
             mEditUserAccount.setHint(R.string.account_setup_new_username);
-            
+
             ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                     android.R.layout.simple_dropdown_item_1line, getResources().getStringArray(R.array.account_domains));
             mSpinnerDomains.setAdapter(adapter);
-            
+
         }
-        
+
         mRememberPass = (CheckBox) findViewById(R.id.rememberPassword);
         mUseTor = (CheckBox) findViewById(R.id.useTor);
-       
+
 
         mBtnSignIn = (Button) findViewById(R.id.btnSignIn);
-        
+
         if (mIsNewAccount)
             mBtnSignIn.setText(R.string.btn_create_new_account);
-        
+
         mBtnAdvanced = (Button) findViewById(R.id.btnAdvanced);
-        mBtnDelete = (Button) findViewById(R.id.btnDelete);
-        
+        mBtnQrDisplay = (Button) findViewById(R.id.btnQR);
+
         mRememberPass.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -349,11 +363,11 @@ public class AccountActivity extends SherlockActivity {
         });
 
     }
-    
+
     private void setupUIPost ()
     {
         Intent i = getIntent();
-        
+
         if (isSignedIn) {
             mBtnSignIn.setText(getString(R.string.menu_sign_out));
             mBtnSignIn.setBackgroundResource(R.drawable.btn_red);
@@ -371,26 +385,27 @@ public class AccountActivity extends SherlockActivity {
                 showAdvanced();
             }
         });
-        
-        mBtnDelete.setOnClickListener(new OnClickListener()
+
+
+        mBtnQrDisplay.setOnClickListener(new OnClickListener()
         {
 
             @Override
             public void onClick(View v) {
-               
-                deleteAccount();
-                finish();
-                
+
+               showQR();
+
             }
-            
+
         });
+
 
         mBtnSignIn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 checkUserChanged();
-                
+
                 if (mUseTor.isChecked())
                 {
                     OrbotHelper oh = new OrbotHelper(AccountActivity.this);
@@ -400,7 +415,7 @@ public class AccountActivity extends SherlockActivity {
                         return;
                     }
                 }
-                
+
 
                 final String pass = mEditPass.getText().toString();
                 final String passConf = mEditPassConfirm.getText().toString();
@@ -408,21 +423,21 @@ public class AccountActivity extends SherlockActivity {
                 final boolean isActive = false; // TODO(miron) does this ever need to be true?
                 ContentResolver cr = getContentResolver();
                 final boolean useTor =  mUseTor.isChecked();
-                        
+
                 if (mIsNewAccount)
                 {
                     mDomain = mSpinnerDomains.getText().toString();
                     String fullUser = mEditUserAccount.getText().toString();
-                    
+
                     if (fullUser.indexOf("@")==-1)
                         fullUser += '@' + mDomain;
-                    
+
                     if (!parseAccount(fullUser)) {
                         mEditUserAccount.selectAll();
                         mEditUserAccount.requestFocus();
                         return;
                     }
-                    
+
                     ImPluginHelper helper = ImPluginHelper.getInstance(AccountActivity.this);
                     mProviderId = helper.createAdditionalProvider(helper.getProviderNames().get(0)); //xmpp FIXME
 
@@ -440,25 +455,21 @@ public class AccountActivity extends SherlockActivity {
                     }
                 }
 
-     
+
                 mAccountId = ImApp.insertOrUpdateAccount(cr, mProviderId, mUserName,
                         rememberPass ? pass : null);
-                
+
                 mAccountUri = ContentUris.withAppendedId(Imps.Account.CONTENT_URI, mAccountId);
-                
+
                 //if remember pass is true, set the "keep signed in" property to true
                 if (mIsNewAccount)
                 {
                     if (pass.equals(passConf))
                     {
-                        createNewAccount(mUserName, pass, mAccountId, useTor);
                         setAccountKeepSignedIn(rememberPass);
-                        mSignInHelper.activateAccount(mProviderId, mAccountId);
-                       // setResult(RESULT_OK);
-                        //mSignInHelper.signIn(pass, mProviderId, accountId, isActive);
-                        //isSignedIn = true;
-                        //updateWidgetState();
-                       // finish();
+
+                        createNewAccount(mUserName, pass, mAccountId, useTor);
+
                     }
                     else
                     {
@@ -472,7 +483,7 @@ public class AccountActivity extends SherlockActivity {
                         isSignedIn = false;
                     } else {
                         setAccountKeepSignedIn(rememberPass);
-                        
+
                         if (!mOriginalUserAccount.equals(mUserName + '@' + mDomain)
                             && shouldShowTermOfUse(brandingRes)) {
                             confirmTermsOfUse(brandingRes, new DialogInterface.OnClickListener() {
@@ -482,19 +493,24 @@ public class AccountActivity extends SherlockActivity {
                                 }
                             });
                         } else {
+
+                            boolean hasKey = checkForKey (mUserName + '@' + mDomain);
+
                             mSignInHelper.signIn(pass, mProviderId, mAccountId, isActive);
                         }
-                      
+
                         isSignedIn = true;
+                        setResult(RESULT_OK);
+                        finish();
                     }
                     updateWidgetState();
-                    setResult(RESULT_OK);
-                    finish();
+
+
                 }
-                
+
             }
         });
-        
+
         mUseTor.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -503,23 +519,23 @@ public class AccountActivity extends SherlockActivity {
         });
 
         updateWidgetState();
-        
+
         if (i.hasExtra("title"))
         {
             String title = i.getExtras().getString("title");
             setTitle(title);
         }
-        
+
         if (i.hasExtra("newuser"))
         {
             String newuser = i.getExtras().getString("newuser");
             mEditUserAccount.setText(newuser);
-            
+
             parseAccount(newuser);
             settingsForDomain(mDomain,mPort);
-            
+
         }
-        
+
         if (i.hasExtra("newpass"))
         {
             mEditPass.setText(i.getExtras().getString("newpass"));
@@ -532,7 +548,32 @@ public class AccountActivity extends SherlockActivity {
         {
             mUseTor.setVisibility(View.GONE);
         }
-        
+
+    }
+
+    private boolean checkForKey (String userid)
+    {
+
+        try
+        {
+            OtrAndroidKeyManagerImpl otrKeyMan = OtrAndroidKeyManagerImpl.getInstance(AccountActivity.this);
+            String fp = otrKeyMan.getLocalFingerprint(userid);
+
+            if (fp == null)
+            {
+                otrKeyMan.generateLocalKeyPair(userid);
+                fp = otrKeyMan.getLocalFingerprint(userid);
+                return true;
+            }
+            else
+                return true;
+        }
+        catch (Exception e)
+        {
+            Log.e(ImApp.LOG_TAG,"error checking for key",e);
+            return false;
+        }
+
     }
 
     private Cursor openAccountByUsernameAndDomain(ContentResolver cr) {
@@ -545,21 +586,21 @@ public class AccountActivity extends SherlockActivity {
         Cursor cursor = cr.query(Imps.Account.BY_DOMAIN_URI, projection, clauses, args, null);
         return cursor;
     }
-    
+
     @Override
     protected void onDestroy() {
-       
+
         if (mCreateAccountTask != null && (!mCreateAccountTask.isCancelled()))
         {
-            mCreateAccountTask.cancel(true);           
+            mCreateAccountTask.cancel(true);
         }
-        
+
         if (mSignInHelper != null)
             mSignInHelper.stop();
-                
+
         super.onDestroy();
     }
-    
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if ((keyCode == KeyEvent.KEYCODE_BACK)) {
@@ -567,10 +608,10 @@ public class AccountActivity extends SherlockActivity {
         }
         return super.onKeyDown(keyCode, event);
     }
-    
+
     private void updateUseTor(boolean useTor) {
         checkUserChanged();
-    
+
         OrbotHelper orbotHelper = new OrbotHelper(this);
 
         ContentResolver cr = getContentResolver();
@@ -582,9 +623,9 @@ public class AccountActivity extends SherlockActivity {
         if (useTor && (!orbotHelper.isOrbotInstalled()))
         {
             //Toast.makeText(this, "Orbot app is not installed. Please install from Google Play or from https://guardianproject.info/releases", Toast.LENGTH_LONG).show();
-            
+
             orbotHelper.promptToInstall(this);
-            
+
             mUseTor.setChecked(false);
             settings.setUseTor(false);
         }
@@ -592,7 +633,7 @@ public class AccountActivity extends SherlockActivity {
         {
             settings.setUseTor(useTor);
         }
-        
+
         settingsForDomain(settings.getDomain(),settings.getPort(),settings);
         settings.close();
     }
@@ -631,18 +672,18 @@ public class AccountActivity extends SherlockActivity {
         if (mEditUserAccount != null)
         {
             String username = mEditUserAccount.getText().toString().trim();
-    
+
             if ((!username.equals(mOriginalUserAccount)) && parseAccount(username)) {
                 //Log.i(TAG, "Username changed: " + mOriginalUserAccount + " != " + username);
                 settingsForDomain(mDomain, mPort);
                 mOriginalUserAccount = username;
-                
+
             }
-        }        
-        
-        
+        }
+
+
     }
-    
+
     boolean parseAccount(String userField) {
         boolean isGood = true;
         String[] splitAt = userField.trim().split("@");
@@ -651,7 +692,7 @@ public class AccountActivity extends SherlockActivity {
         mPort = 0;
 
         if (splitAt.length > 1) {
-            mDomain = splitAt[1].toLowerCase();
+            mDomain = splitAt[1].toLowerCase(Locale.US);
             String[] splitColon = mDomain.split(":");
             mDomain = splitColon[0];
             if (splitColon.length > 1) {
@@ -670,17 +711,17 @@ public class AccountActivity extends SherlockActivity {
         }
 
         //its okay if domain is null;
-        
+
 //        if (mDomain == null) {
   //          isGood = false;
-            //Toast.makeText(AccountActivity.this, 
+            //Toast.makeText(AccountActivity.this,
             //	R.string.account_wizard_no_domain_warning,
             //	Toast.LENGTH_LONG).show();
-    //    } 
+    //    }
         /*//removing requirement of a . in the domain
-        else if (mDomain.indexOf(".") == -1) { 
+        else if (mDomain.indexOf(".") == -1) {
             isGood = false;
-            //	Toast.makeText(AccountActivity.this, 
+            //	Toast.makeText(AccountActivity.this,
             //		R.string.account_wizard_no_root_domain_warning,
             //	Toast.LENGTH_LONG).show();
         }*/
@@ -699,71 +740,62 @@ public class AccountActivity extends SherlockActivity {
 
         Imps.ProviderSettings.QueryMap settings = new Imps.ProviderSettings.QueryMap(
                 pCursor, cr, mProviderId, false /* don't keep updated */, null /* no handler */);
-    
+
         settingsForDomain(domain, port, settings);
-   
+
         settings.close();
-   
+
     }
 
     private void settingsForDomain(String domain, int port, Imps.ProviderSettings.QueryMap settings) {
-        
+
 
         settings.setRequireTls(true);
         settings.setTlsCertVerify(true);
         settings.setAllowPlainAuth(false);
         settings.setPort(DEFAULT_PORT);
-        
+
         if (domain.equals("gmail.com")) {
             // Google only supports a certain configuration for XMPP:
             // http://code.google.com/apis/talk/open_communications.html
-            
-            if (settings.getUseTor())
-            {
-                // this is not @gmail but IS a google account
-                settings.setDoDnsSrv(false);
-                settings.setServer(DEFAULT_SERVER_GOOGLE); //set the google connect server
-            }
-            
+
+            settings.setDoDnsSrv(false);
+            settings.setServer(DEFAULT_SERVER_GOOGLE); //set the google connect server
             settings.setDomain(domain);
-        } 
+        }
         //mEditPass can be NULL if this activity is used in "headless" mode for auto account setup
         else if (mEditPass != null && mEditPass.getText().toString().startsWith(GTalkOAuth2.NAME))
         {
-            if (settings.getUseTor())
-            {
-                // this is not @gmail but IS a google account
-                settings.setDoDnsSrv(false);
-                settings.setServer(DEFAULT_SERVER_GOOGLE); //set the google connect server
-            }
-            
+            // this is not @gmail but IS a google account
+            settings.setDoDnsSrv(false);
+            settings.setServer(DEFAULT_SERVER_GOOGLE); //set the google connect server
             settings.setDomain(domain);
         }
         else if (domain.equals("jabber.org")) {
-            
+
             if (settings.getUseTor())
             {
                 settings.setDoDnsSrv(false);
                 settings.setServer(DEFAULT_SERVER_JABBERORG);
             }
-            
-            settings.setDomain(domain);         
-            
+
+            settings.setDomain(domain);
+
         } else if (domain.equals("facebook.com")) {
-            
+
             if (settings.getUseTor())
             {
                 settings.setDoDnsSrv(false);
                 settings.setServer(DEFAULT_SERVER_FACEBOOK);
-                
+
             }
-            
+
             settings.setDomain(DEFAULT_SERVER_FACEBOOK);
-        } 
+        }
         else if (domain.equals("jabber.calyxinstitute.org")) {
-            
+
             if (settings.getUseTor())
-            {                
+            {
                 settings.setDoDnsSrv(false);
                 settings.setServer(ONION_CALYX);
             }
@@ -772,13 +804,13 @@ public class AccountActivity extends SherlockActivity {
                 settings.setDoDnsSrv(false);
                 settings.setServer("");
             }
-            
-            settings.setDomain(domain);  
-        } 
+
+            settings.setDomain(domain);
+        }
         else if (domain.equals("jabber.ccc.de")) {
-            
+
             if (settings.getUseTor())
-            {                
+            {
                 settings.setDoDnsSrv(false);
                 settings.setServer(ONION_JABBERCCC);
             }
@@ -787,19 +819,19 @@ public class AccountActivity extends SherlockActivity {
                 settings.setDoDnsSrv(true);
                 settings.setServer("");
             }
-            
-            settings.setDomain(domain);     
-        }        
+
+            settings.setDomain(domain);
+        }
         else {
-          
+
             settings.setDomain(domain);
             settings.setPort(port);
-            
+
             //if use Tor, turn off DNS resolution, and set Server manually from Domain
             if (settings.getUseTor())
             {
                 settings.setDoDnsSrv(false);
-                
+
                 //if Tor is off, and the user has not provided any values here, set to the @domain
                 if (settings.getServer() == null || settings.getServer().length() == 0)
                     settings.setServer(domain);
@@ -810,9 +842,9 @@ public class AccountActivity extends SherlockActivity {
                 settings.setDoDnsSrv(true);
                 settings.setServer("");
             }
-            
+
         }
-        
+
         settings.requery();
     }
 
@@ -862,7 +894,7 @@ public class AccountActivity extends SherlockActivity {
         getContentResolver().update(mAccountUri, values, null, null);
 
         mApp = (ImApp)getApplication();
-        
+
         mApp.callWhenServiceConnected(mHandler, new Runnable() {
             @Override
             public void run() {
@@ -905,10 +937,10 @@ public class AccountActivity extends SherlockActivity {
             mBtnSignIn.setBackgroundResource(R.drawable.btn_green);
         }
     }
-    
-    void createNewaccount (long accountId) 
+
+    void createNewaccount (long accountId)
     {
-       
+
             ContentValues values = new ContentValues(2);
 
             values.put(AccountStatusColumns.PRESENCE_STATUS, CommonPresenceColumns.NEW_ACCOUNT);
@@ -916,9 +948,9 @@ public class AccountActivity extends SherlockActivity {
             String where = AccountStatusColumns.ACCOUNT + "=?";
             getContentResolver().update(Imps.AccountStatus.CONTENT_URI, values, where,
                     new String[] { Long.toString(accountId) });
-            
-        
-       
+
+
+
     }
 
     @Override
@@ -955,7 +987,7 @@ public class AccountActivity extends SherlockActivity {
         }
         else
         {
-            
+
         }
     }
 
@@ -978,11 +1010,13 @@ public class AccountActivity extends SherlockActivity {
 
     private void deleteAccount ()
     {
-      
-        //need to delete 
+
+        //need to delete
         ((ImApp)getApplication()).deleteAccount(mAccountId, mProviderId);
+
+        finish();
     }
-    
+
     private void showAdvanced() {
 
         checkUserChanged();
@@ -994,7 +1028,7 @@ public class AccountActivity extends SherlockActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = this.getSherlock().getMenuInflater();
+        MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.account_settings_menu, menu);
 
         if (isEdit) {
@@ -1012,22 +1046,25 @@ public class AccountActivity extends SherlockActivity {
             finish();
             return true;
 
+        case R.id.menu_account_delete:
+            deleteAccount();
+            return true;
+
         }
         return super.onOptionsItemSelected(item);
     }
 
-    public void createNewAccount (String usernameNew, String passwordNew, final long newAccountId, final boolean useTor)
+    public void createNewAccount (final String usernameNew, final String passwordNew, final long newAccountId, final boolean useTor)
     {
         if (mCreateAccountTask != null && (!mCreateAccountTask.isCancelled()))
         {
-            mCreateAccountTask.cancel(true);           
+            mCreateAccountTask.cancel(true);
         }
-        
-        mCreateAccountTask = new AsyncTask<String, Void, String>() {
-            
+
+        mCreateAccountTask = new AsyncTask<Void, Void, String>() {
+
             private ProgressDialog dialog;
-            
-            
+
             @Override
             protected void onPreExecute() {
                 dialog = new ProgressDialog(AccountActivity.this);
@@ -1035,10 +1072,9 @@ public class AccountActivity extends SherlockActivity {
                 dialog.setMessage(getString(R.string.registering_new_account_));
                 dialog.show();
             }
-            
+
             @Override
-            protected String doInBackground(String... params) {
-                
+            protected String doInBackground(Void... params) {
                 ContentResolver cr = getContentResolver();
                 Cursor pCursor = cr.query(Imps.ProviderSettings.CONTENT_URI,new String[] {Imps.ProviderSettings.NAME, Imps.ProviderSettings.VALUE},Imps.ProviderSettings.PROVIDER + "=?",new String[] { Long.toString(mProviderId)},null);
 
@@ -1048,28 +1084,30 @@ public class AccountActivity extends SherlockActivity {
                 try {
                     settings.setUseTor(useTor);
                     settingsForDomain(mDomain, mPort, settings);
-                    
+
+                    HashMap<String,String> aParams = new HashMap<String,String>();
+
                     XmppConnection xmppConn = new XmppConnection(AccountActivity.this);
-                    
+
                     xmppConn.initUser(mProviderId, newAccountId);
-                    xmppConn.registerAccount(settings, params[0], params[1]);
+                    xmppConn.registerAccount(settings, usernameNew, passwordNew, aParams);
                     // settings closed in registerAccount
                 } catch (Exception e) {
                     LogCleaner.error(ImApp.LOG_TAG, "error registering new account", e);
-                   
+
                     return e.getLocalizedMessage();
                 } finally {
-                    
+
                     settings.close();
                 }
-                
+
                 return null;
               }
 
             @Override
             protected void onPostExecute(String result) {
                 super.onPostExecute(result);
-                
+
                 try
                 {
                     if (dialog != null && dialog.isShowing()) {
@@ -1081,22 +1119,31 @@ public class AccountActivity extends SherlockActivity {
                 {
                     //dialog may not be attached to window if Activity was closed
                 }
-                
+
                 if (result != null)
                 {
                     Toast.makeText(AccountActivity.this, "error creating account: " + result, Toast.LENGTH_LONG).show();
+                    //AccountActivity.this.setResult(Activity.RESULT_CANCELED);
+                    //AccountActivity.this.finish();
                 }
-                
-                AccountActivity.this.setResult(Activity.RESULT_CANCELED);
-                AccountActivity.this.finish();
-                
-               
+                else
+                {
+                    mSignInHelper.activateAccount(mProviderId, newAccountId);
+                    mSignInHelper.signIn(passwordNew, mProviderId, newAccountId, true);
+
+                    AccountActivity.this.setResult(Activity.RESULT_OK);
+                    AccountActivity.this.finish();
+                }
             }
-        }.execute(usernameNew, passwordNew);
-        
-        
+        }.execute();
     }
-   
+
+    public void showQR ()
+    {
+           String localFingerprint = OtrAndroidKeyManagerImpl.getInstance(this).getLocalFingerprint(mOriginalUserAccount);
+           String uri = XmppUriHelper.getUri(mOriginalUserAccount, localFingerprint);
+           new IntentIntegrator(this).shareText(uri);
+    }
 
     private void setAccountKeepSignedIn(final boolean rememberPass) {
         ContentValues values = new ContentValues();

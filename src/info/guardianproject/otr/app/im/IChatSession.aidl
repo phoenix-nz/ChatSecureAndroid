@@ -60,7 +60,7 @@ interface IChatSession {
      * Convert a single chat to a group chat. If the chat session is already a
      * group chat or it's converting to group chat.
      */
-    void convertToGroupChat();
+    void convertToGroupChat(String nickname);
 
     /**
      * Invites a contact to join this ChatSession. The user can only invite
@@ -87,7 +87,7 @@ interface IChatSession {
     /**
      * Sends data to all participants in this ChatSession.
      */
-    void offerData(String offerId, String localUri, String type);
+    boolean offerData(String offerId, String localUri, String type);
 
     /**
      * Mark this chat session as read.
@@ -103,4 +103,15 @@ interface IChatSession {
     * set class for handling incoming data transfers
     */
     void setDataListener (IDataListener dataListener);
+    
+    /**
+    * respond to incoming data request
+    */
+    void setIncomingFileResponse (boolean acceptThis, boolean acceptAll);
+    
+    /**
+    * reinit chatsession if we are starting a new chat
+    */
+    void reInit();
 }
+

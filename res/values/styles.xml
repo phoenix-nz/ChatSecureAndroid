@@ -48,43 +48,6 @@
     
   
 
-    
-    <style name="MyActionBarStyleLight" parent="Widget.Sherlock.ActionBar">
-    <item name="android:background">#bbcccccc</item>
-    <item name="background">#bbcccccc</item>
-</style>
-    
-    <style name="MyActionBarStyle" parent="Widget.Sherlock.ActionBar">
-    <item name="android:background">#bb333333</item>
-    <item name="background">#bb333333</item>
-</style>
-    
-    <!-- style the overflow menu -->
-    <style name="MyPopupMenu" parent="Widget.Sherlock.PopupMenu">
-        <item name="android:popupBackground">@drawable/ad_menu_dropdown_panel_holo_light</item>
-    </style>
-
-    <!-- style the items within the overflow menu -->
-    <style name="MyDropDownListView" parent="Widget.Sherlock.ListView.DropDown">
-        <item name="android:listSelector">@drawable/ad_selectable_background</item>
-    </style>
-
-    <!-- style for the tabs -->
-    <style name="MyActionBarTabStyle" parent="Widget.Sherlock.ActionBar.TabBar">
-        <item name="android:background">@drawable/actionbar_tab_bg</item>
-        <item name="android:paddingLeft">32dp</item>
-        <item name="android:paddingRight">32dp</item>
-    </style>
-
-    <!-- style the list navigation -->
-    <style name="MyDropDownNav" parent="Widget.Sherlock.Spinner.DropDown.ActionBar">
-        <!-- 
-        <item name="android:background">@drawable/ad_spinner_background_holo_light</item>
-        <item name="android:popupBackground">@drawable/ad_menu_dropdown_panel_holo_light</item>
-        <item name="android:dropDownSelector">@drawable/ad_selectable_background</item>
-         -->
-    </style>
-
     <!-- the following can be used to style the overflow menu button
          only do this if you have an *extremely* good reason to!! -->
     <!--<style name="MyOverflowButton" parent="Widget.Sherlock.ActionButton.Overflow">
@@ -104,25 +67,58 @@
         <item name="android:backgroundDimEnabled">true</item>
         <item name="android:backgroundDimAmount">0.7</item>
     </style>
-    
-        
-    <style name="AppTheme" parent="Theme.Sherlock.Light.DarkActionBar" >    
+
+    <style name="AppTheme" parent="@style/Theme.AppCompat.Light" >    
          <item name="messageRoundBackground">@drawable/message_view_rounded_light</item>             
-         <item name="messageTextPrimary">#333333</item>
-         <item name="messageTextSecondary">#999999</item>
-         <item name="android:background">#dddddd</item>
+         <item name="messageTextPrimary">#111111</item>
+         <item name="messageTextSecondary">#777777</item>
+                  
+         <item name="listBackground">#eceff1</item>
          
-         <item name="homeAsUpIndicator">@drawable/ic_drawer</item>
+         <item name="toolbarBackground">#CFD8DC</item>
+         <item name="inputBackground">#CCECEFF1</item>
+    <!-- customize the color palette -->
+   
+   		<item name="contactTextPrimary">#111111</item>
+         <item name="contactTextSecondary">#777777</item>
+   
+    <item name="colorPrimary">#aaaaaa</item>
+    <item name="colorPrimaryDark">#333333</item>
+    <item name="colorAccent">#00aa00</item>
+    
+    <item name="windowActionBar">true</item>
+       <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
+       <item name="windowActionModeOverlay">true</item>
+       
      </style>
     
-   <style name="AppThemeDark" parent="Theme.Sherlock" >
-        <item name="messageTextPrimary">#cccccc</item>
+   <style name="AppThemeDark" parent="@style/Theme.AppCompat" >
+        <item name="messageTextPrimary">#dddddd</item>
        <item name="messageRoundBackground">@drawable/message_view_rounded_dark</item>                     
          <item name="messageTextSecondary">#aaaaaa</item>
-         <item name="android:background">#222222</item>
+         <item name="listBackground">#263238</item>                     
+		<item name="contactTextPrimary">#dddddd</item>
+         <item name="contactTextSecondary">#aaaaaa</item>
          
-             <item name="homeAsUpIndicator">@drawable/ic_drawer</item>
-        
+         <item name="toolbarBackground">#263238</item>
+                  <item name="inputBackground">#CC263238</item>
+         
+    <!-- customize the color palette -->
+    
+    <item name="colorPrimary">#eeeeee</item>
+    <item name="colorPrimaryDark">#111111</item>
+    <item name="colorAccent">#006600</item>
+    
+    <item name="windowActionBar">true</item>
+       <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
+       <item name="windowActionModeOverlay">true</item>
+       
     </style>
     
+   <style name="DrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">
+    <item name="spinBars">true</item>
+    <item name="color">@android:color/white</item>
+</style>
+    
+
 </resources>

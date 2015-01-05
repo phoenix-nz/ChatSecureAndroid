@@ -35,9 +35,9 @@ public class OtrEngineHostImpl implements OtrEngineHost {
     private Context mContext;
 
     private Hashtable<SessionID, String> mSessionResources;
-    
+
     private RemoteImService mImService;
-    
+
     public OtrEngineHostImpl(OtrPolicy policy, Context context, OtrKeyManager otrKeyManager, RemoteImService imService) throws IOException {
         mPolicy = policy;
         mContext = context;
@@ -45,7 +45,7 @@ public class OtrEngineHostImpl implements OtrEngineHost {
         mSessionResources = new Hashtable<SessionID, String>();
 
         mOtrKeyManager = otrKeyManager;
-        
+
         mImService = imService;
 
 
@@ -60,15 +60,18 @@ public class OtrEngineHostImpl implements OtrEngineHost {
     }
 
     public Address appendSessionResource(SessionID session, Address to) {
+
         String resource = mSessionResources.get(session);
         if (resource != null)
             return new XmppAddress(to.getBareAddress() + '/' + resource);
         else
             return to;
+
+        //return new XmppAddress(session.getRemoteUserId());
     }
 
     public ImConnectionAdapter findConnection(SessionID session) {
-        
+
         return mImService.getConnection(Address.stripResource(session.getLocalUserId()));
     }
 
@@ -111,7 +114,9 @@ public class OtrEngineHostImpl implements OtrEngineHost {
         mPolicy = policy;
     }
 
-    private boolean sendMessage(SessionID sessionID, String body) {
+    public void injectMessage(SessionID sessionID, String text) {
+        OtrDebugLogger.log(sessionID.toString() + ": injecting message: " + text);
+
         ImConnectionAdapter connection = findConnection(sessionID);
         if (connection != null)
         {
@@ -119,61 +124,52 @@ public class OtrEngineHostImpl implements OtrEngineHost {
                     .getChatSessionManager();
             ChatSessionAdapter chatSessionAdapter = (ChatSessionAdapter) chatSessionManagerAdapter
                     .getChatSession(Address.stripResource(sessionID.getRemoteUserId()));
-           
+
             if (chatSessionAdapter != null)
             {
-                
+                String body = text;
+
+                if (body == null)
+                    body = ""; //don't allow null messages, only empty ones!
+
                 Message msg = new Message(body);
-                
+
                 msg.setFrom(connection.getLoginUser().getAddress());
                 final Address to = chatSessionAdapter.getAdaptee().getParticipant().getAddress();
                 msg.setTo(appendSessionResource(sessionID, to));
-                msg.setDateTime(new Date());
-                
+                //msg.setTo(to);
+               // msg.setDateTime(new Date());
+
                 // msg ID is set by plugin
-                // msg.setID(msg.getFrom().getBareAddress() + ":" + msg.getDateTime().getTime());
-                
                 chatSessionManagerAdapter.getChatSessionManager().sendMessageAsync(chatSessionAdapter.getAdaptee(), msg);
-                
-                return true;
+
             }
             else
             {
                 OtrDebugLogger.log(sessionID.toString() + ": could not find chatSession");
-                
+
             }
-        }   
+        }
         else
         {
             OtrDebugLogger.log(sessionID.toString() + ": could not find ImConnection");
-            
+
         }
-        
-        return false;
-    }
 
-    public void injectMessage(SessionID sessionID, String text) {
-      //  OtrDebugLogger.log(sessionID.toString() + ": injecting message: " + text);
 
-        sendMessage(sessionID, text);
     }
 
     public void showError(SessionID sessionID, String error) {
         OtrDebugLogger.log(sessionID.toString() + ": ERROR=" + error);
 
-        if (mImService != null)
-            mImService.showToast("Encryption Error: " + error,Toast.LENGTH_SHORT);
-        
-        
+      //  Toast.makeText(mContext, "ERROR: " + error, Toast.LENGTH_SHORT).show();
+
     }
 
     public void showWarning(SessionID sessionID, String warning) {
         OtrDebugLogger.log(sessionID.toString() + ": WARNING=" + warning);
-       
-        if (mImService != null)
-            mImService.showToast("Encryption Warning: " + warning,Toast.LENGTH_SHORT);
-        
+
     }
 
-    
+
 }

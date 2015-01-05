@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2007-2008 Esmertec AG. Copyright (C) 2007-2008 The Android Open
  * Source Project
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -67,7 +67,7 @@ public class ContactListManagerAdapter extends
     final RemoteCallbackList<IContactListListener> mRemoteContactListeners = new RemoteCallbackList<IContactListListener>();
     final RemoteCallbackList<ISubscriptionListener> mRemoteSubscriptionListeners = new RemoteCallbackList<ISubscriptionListener>();
 
-    HashMap<Address, ContactListAdapter> mContactLists;
+    HashMap<String, ContactListAdapter> mContactLists;
     // Temporary contacts are created when a peer is encountered, and that peer
     // is not yet on any contact list.
     HashMap<String, Contact> mTemporaryContacts;
@@ -98,12 +98,12 @@ public class ContactListManagerAdapter extends
 
         new Thread(this).start();
     }
-    
+
     public void run ()
     {
         mContactListListenerAdapter = new ContactListListenerAdapter();
         mSubscriptionListenerAdapter = new SubscriptionRequestListenerAdapter();
-        mContactLists = new HashMap<Address, ContactListAdapter>();
+        mContactLists = new HashMap<String, ContactListAdapter>();
         mTemporaryContacts = new HashMap<String, Contact>();
         mOfflineContacts = new HashMap<String, Contact>();
         mValidatedContacts = new HashSet<String>();
@@ -127,27 +127,27 @@ public class ContactListManagerAdapter extends
         ContentUris.appendId(builder, mAccountId);
 
         mContactUrl = builder.build();
-        
+
         seedInitialPresences();
-        loadOfflineContacts();
+       // loadOfflineContacts();
     }
-    
+
     private void loadOfflineContacts() {
-        Cursor contactCursor = mResolver.query(mContactUrl, new String[] { Imps.Contacts.USERNAME },
+        Cursor contactCursor = mResolver.query(mContactUrl, new String[] { Imps.Contacts.USERNAME, Imps.Contacts.NICKNAME },
                 null, null, null);
-       
+
         String[] addresses = new String[contactCursor.getCount()];
         int i = 0;
         while (contactCursor.moveToNext())
         {
             addresses[i++] = contactCursor.getString(0);
-            
+
         }
-        
+
         Contact[] contacts = mAdaptee.createTemporaryContacts(addresses);
-        for (Contact contact : contacts)
+        for (Contact contact : contacts)            
                 mOfflineContacts.put(contact.getAddress().getBareAddress(), contact);
-    
+
         contactCursor.close();
     }
 
@@ -172,13 +172,11 @@ public class ContactListManagerAdapter extends
     }
 
     public List<ContactListAdapter> getContactLists() {
-        synchronized (mContactLists) {
-            return new ArrayList<ContactListAdapter>(mContactLists.values());
-        }
+        return new ArrayList<ContactListAdapter>(mContactLists.values());
     }
 
     public int removeContact(String address) {
-        
+
         closeChatSession(address);
 
         if (isTemporary(address)) {
@@ -205,7 +203,7 @@ public class ContactListManagerAdapter extends
         String selection = Imps.Contacts.USERNAME + "=?";
         String[] selectionArgs = { address };
         mResolver.delete(mContactUrl, selection, selectionArgs);
-        
+
         return ImErrorInfo.NO_ERROR;
     }
 
@@ -225,7 +223,7 @@ public class ContactListManagerAdapter extends
         if( updated != 1 ) {
             return ImErrorInfo.ILLEGAL_CONTACT_ADDRESS;
         }
-        
+
         return ImErrorInfo.NO_ERROR;
     }
 
@@ -298,8 +296,9 @@ public class ContactListManagerAdapter extends
     public void loadContactLists() {
         if (mAdaptee.getState() == ContactListManager.LISTS_NOT_LOADED) {
             clearValidatedContactsAndLists();
-            mAdaptee.loadContactListsAsync();
-        }
+       }
+        mAdaptee.loadContactListsAsync();
+        
     }
 
     public int getState() {
@@ -308,9 +307,12 @@ public class ContactListManagerAdapter extends
 
     public Contact getContactByAddress(String address) {
         if (mAdaptee.getState() == ContactListManager.LISTS_NOT_LOADED) {
-            return mOfflineContacts.get(address);
+            if (mOfflineContacts != null)
+                return mOfflineContacts.get(address);
+            else
+                return null;
         }
-        
+
         Contact c = mAdaptee.getContact(address);
         if (c == null) {
             synchronized (mTemporaryContacts) {
@@ -320,10 +322,10 @@ public class ContactListManagerAdapter extends
             return c;
         }
     }
-    
+
     public Contact[] createTemporaryContacts(String[] addresses) {
         Contact[] contacts = mAdaptee.createTemporaryContacts(addresses);
-        
+
         for (Contact c : contacts)
             insertTemporary(c);
         return contacts;
@@ -363,7 +365,7 @@ public class ContactListManagerAdapter extends
      * Tells if a contact is a temporary one which is not in the list of
      * contacts that we subscribe presence for. Usually created because of the
      * user is having a chat session with this contact.
-     * 
+     *
      * @param address the address of the contact.
      * @return <code>true</code> if it's a temporary contact; <code>false</code>
      *         otherwise.
@@ -506,14 +508,16 @@ public class ContactListManagerAdapter extends
                 }
             });
         }
-        
+
         public void onContactChange(final int type, final ContactList list, final Contact contact) {
             ContactListAdapter removed = null;
             String notificationText = null;
 
             switch (type) {
-            case LIST_LOADED:
             case LIST_CREATED:
+                break;
+
+            case LIST_LOADED:
                 addContactListContent(list);
                 break;
 
@@ -531,25 +535,30 @@ public class ContactListManagerAdapter extends
                 break;
 
             case LIST_CONTACT_ADDED:
-                long listId = getContactListAdapter(list.getAddress()).getDataBaseId();
-                if (isTemporary(mAdaptee.normalizeAddress(contact.getAddress().getAddress()))) {
-                    moveTemporaryContactToList(mAdaptee.normalizeAddress(contact.getAddress().getAddress()), listId);
-                } else {
-                    
-                    boolean exists = updateContact(contact, listId);
-                    
-                    //if (!exists)
-                      //     insertContactContent(contact, listId);
-                }
-                notificationText = mContext.getResources().getString(R.string.add_contact_success,
-                        contact.getName());
-                // handle case where a contact is added before mAllContactsLoaded
-                if (!mAllContactsLoaded) {
-                    // if a contact is added to a cached contact list before the actual contact
-                    // list is downloaded from the server, we will have to add the contact to
-                    // the contact list once mAllContactsLoaded is true
-                    if (!mValidatedContactLists.contains(list.getName())) {
-                        mDelayedContactChanges.add(new StoredContactChange(type, list, contact));
+
+                ContactListAdapter cla = getContactListAdapter(list.getAddress());
+                if (cla != null)
+                {
+                    long listId = cla.getDataBaseId();
+                    if (isTemporary(mAdaptee.normalizeAddress(contact.getAddress().getAddress()))) {
+                        moveTemporaryContactToList(mAdaptee.normalizeAddress(contact.getAddress().getAddress()), listId);
+                    } else {
+
+                        boolean exists = updateContact(contact, listId);
+
+                        if (!exists)
+                             insertContactContent(contact, listId, Imps.Contacts.TYPE_NORMAL);
+                    }
+                    notificationText = mContext.getResources().getString(R.string.add_contact_success,
+                            contact.getName());
+                    // handle case where a contact is added before mAllContactsLoaded
+                    if (!mAllContactsLoaded) {
+                        // if a contact is added to a cached contact list before the actual contact
+                        // list is downloaded from the server, we will have to add the contact to
+                        // the contact list once mAllContactsLoaded is true
+                        if (!mValidatedContactLists.contains(list.getName())) {
+                            mDelayedContactChanges.add(new StoredContactChange(type, list, contact));
+                        }
                     }
                 }
                 break;
@@ -622,7 +631,7 @@ public class ContactListManagerAdapter extends
             } else {
                 listAdapter = (list == null) ? null : getContactListAdapter(list.getAddress());
             }
-            
+
             broadcast(new ContactListBroadcaster() {
                 public void broadcast(IContactListListener listener) throws RemoteException {
                     listener.onContactChange(type, listAdapter, contact);
@@ -651,7 +660,7 @@ public class ContactListManagerAdapter extends
 
         public void onAllContactListsLoaded() {
             mAllContactsLoaded = true;
-            
+
             handleDelayedContactChanges();
             removeObsoleteContactsAndLists();
 
@@ -672,13 +681,13 @@ public class ContactListManagerAdapter extends
             Uri uri = insertOrUpdateSubscription(username, nickname,
                     Imps.Contacts.SUBSCRIPTION_TYPE_FROM,
                     Imps.Contacts.SUBSCRIPTION_STATUS_SUBSCRIBE_PENDING);
-           
+
             boolean hadListener = broadcast(new SubscriptionBroadcaster() {
                 public void broadcast(ISubscriptionListener listener) throws RemoteException {
                     listener.onSubScriptionRequest(from, mProviderId, mAccountId);
                 }
             });
-            
+
             if (!hadListener)
             {
                 mContext.getStatusBarNotifier().notifySubscriptionRequest(mProviderId, mAccountId,
@@ -689,14 +698,14 @@ public class ContactListManagerAdapter extends
         public void onUnSubScriptionRequest(final Contact from, long providerId, long accountId) {
             String username = mAdaptee.normalizeAddress(from.getAddress().getAddress());
             String nickname = from.getName();
-            
+
             //to be implemented - should prompt user to approve unsubscribe?
         }
 
-        
+
         private boolean broadcast(SubscriptionBroadcaster callback) {
             boolean hadListener = false;
-            
+
             synchronized (mRemoteSubscriptionListeners) {
                 final int N = mRemoteSubscriptionListeners.beginBroadcast();
                 for (int i = 0; i < N; i++) {
@@ -711,7 +720,7 @@ public class ContactListManagerAdapter extends
                 }
                 mRemoteSubscriptionListeners.finishBroadcast();
             }
-            
+
             return hadListener;
         }
 
@@ -816,7 +825,7 @@ public class ContactListManagerAdapter extends
 
     /**
      * Insert or update subscription request from user into the database.
-     * 
+     *
      * @param username
      * @param nickname
      * @param subscriptionType
@@ -857,10 +866,39 @@ public class ContactListManagerAdapter extends
 
     boolean updateContact(Contact contact, long listId)
     {
-        ContentValues values = getContactContentValues(contact, listId);
-        return updateContact(mAdaptee.normalizeAddress(contact.getAddress().getAddress()),values);
-        
+       String addr = mAdaptee.normalizeAddress(contact.getAddress().getAddress());
+       boolean exists = updateContact(addr,getContactContentValues(contact, listId));
+       
+       if (exists)
+       {
+           String username = mAdaptee.normalizeAddress(contact.getAddress().getAddress());
+           String selection = Imps.Contacts.USERNAME + "=?";
+           String[] selectionArgs = { username };
+           String[] projection = { Imps.Contacts._ID };
+
+           Cursor cursor = mResolver.query(mContactUrl, projection, selection, selectionArgs, null);
+
+           if (cursor != null)
+           {
+            
+               while (cursor.moveToNext())
+               {
+                   long contactId = cursor.getLong(0);
+                   ContentValues presenceValues = getPresenceValues(contact);
+                   selection = Imps.Presence.CONTACT_ID + "=?";                   
+                   String[] selectionArgs2 = {contactId+""};
+                   mResolver.update(Imps.Presence.CONTENT_URI,presenceValues, selection, selectionArgs2);
+               }
+               
+               cursor.close();
+           } 
+           
+          
+       }
+       
+       return exists;
     }
+
     boolean updateContact(String username, ContentValues values) {
         String selection = Imps.Contacts.USERNAME + "=?";
         String[] selectionArgs = { username };
@@ -868,23 +906,25 @@ public class ContactListManagerAdapter extends
     }
 
     void updatePresenceContent(Contact[] contacts) {
-        
+
         if (mAdaptee == null)
             return;
-        
+
         ArrayList<String> usernames = new ArrayList<String>();
+        ArrayList<String> nicknames = new ArrayList<String>();
         ArrayList<String> statusArray = new ArrayList<String>();
         ArrayList<String> customStatusArray = new ArrayList<String>();
         ArrayList<String> clientTypeArray = new ArrayList<String>();
 
         for (Contact c : contacts) {
-            String username = mAdaptee.normalizeAddress(c.getAddress().getAddress());
+            String username = mAdaptee.normalizeAddress(c.getAddress().getAddress());            
             Presence p = c.getPresence();
             int status = convertPresenceStatus(p);
             String customStatus = p.getStatusText();
             int clientType = translateClientType(p);
 
             usernames.add(username);
+            nicknames.add(c.getName());
             statusArray.add(String.valueOf(status));
             customStatusArray.add(customStatus);
             clientTypeArray.add(String.valueOf(clientType));
@@ -893,6 +933,7 @@ public class ContactListManagerAdapter extends
         ContentValues values = new ContentValues();
         values.put(Imps.Contacts.ACCOUNT, mAccountId);
         putStringArrayList(values, Imps.Contacts.USERNAME, usernames);
+        putStringArrayList(values, Imps.Contacts.NICKNAME, nicknames);
         putStringArrayList(values, Imps.Presence.PRESENCE_STATUS, statusArray);
         putStringArrayList(values, Imps.Presence.PRESENCE_CUSTOM_STATUS, customStatusArray);
         putStringArrayList(values, Imps.Presence.CONTENT_TYPE, clientTypeArray);
@@ -977,19 +1018,17 @@ public class ContactListManagerAdapter extends
 
         mValidatedContactLists.add(list.getName());
 
-        synchronized (mContactLists) {
-            mContactLists.put(list.getAddress(), new ContactListAdapter(list, listId));
-        }
+        mContactLists.put(list.getAddress().getAddress(), new ContactListAdapter(list, listId));
 
         Cursor contactCursor = mResolver.query(mContactUrl, new String[] { Imps.Contacts.USERNAME },
                 Imps.Contacts.CONTACTLIST + "=?", new String[] { "" + listId }, null);
         Set<String> existingUsernames = new HashSet<String>();
-        
-        
+
+
         while (contactCursor.moveToNext())
                 existingUsernames.add(contactCursor.getString(0));
-       
-        
+
+
         contactCursor.close();
 
         Collection<Contact> contacts = list.getContacts();
@@ -1014,13 +1053,13 @@ public class ContactListManagerAdapter extends
         ArrayList<String> nicknames = new ArrayList<String>();
         ArrayList<String> contactTypeArray = new ArrayList<String>();
         for (Contact c : contacts) {
-            
+
             if (updateContact(c,listId))
                 continue; //contact existed and was updated to this list
-                
+
             String username = mAdaptee.normalizeAddress(c.getAddress().getAddress());
             String nickname = c.getName();
-            
+
             int type = Imps.Contacts.TYPE_NORMAL;
             if (isTemporary(username)) {
                 type = Imps.Contacts.TYPE_TEMPORARY;
@@ -1087,9 +1126,9 @@ public class ContactListManagerAdapter extends
             String selection = Imps.Contacts.USERNAME + "=?";
             String[] selectionArgs = { username };
             mResolver.delete(mContactUrl, selection, selectionArgs);
-            
+
         }
-        
+
         // clear the history message if the contact doesn't exist in any list
         // anymore.
         if (mAdaptee.getContact(contact.getAddress()) == null) {
@@ -1102,12 +1141,9 @@ public class ContactListManagerAdapter extends
         values.put(Imps.Contacts.TYPE, type);
         Uri uri = mResolver.insert(mContactUrl, values);
 
-        ContentValues presenceValues = getPresenceValues(ContentUris.parseId(uri),
-                contact.getPresence());
-
+        ContentValues presenceValues = getPresenceValues(contact);
         mResolver.insert(Imps.Presence.CONTENT_URI, presenceValues);
-   
-        
+
         return uri;
     }
 
@@ -1135,9 +1171,9 @@ public class ContactListManagerAdapter extends
         mResolver.delete(uri, null, null);
     }
 
-    private ContentValues getPresenceValues(long contactId, Presence p) {
-        ContentValues values = new ContentValues(3);
-        values.put(Imps.Presence.CONTACT_ID, contactId);
+    private ContentValues getPresenceValues(Contact c) {
+        Presence p = c.getPresence();
+        ContentValues values = new ContentValues(3);        
         values.put(Imps.Contacts.PRESENCE_STATUS, convertPresenceStatus(p));
         values.put(Imps.Contacts.PRESENCE_CUSTOM_STATUS, p.getStatusText());
         values.put(Imps.Presence.CLIENT_TYPE, translateClientType(p));
@@ -1156,7 +1192,7 @@ public class ContactListManagerAdapter extends
 
     /**
      * Converts the presence status to the value defined for ImProvider.
-     * 
+     *
      * @param presence The presence from the IM engine.
      * @return The status value defined in for ImProvider.
      */
@@ -1186,7 +1222,7 @@ public class ContactListManagerAdapter extends
     public void clearOnLogout() {
         clearValidatedContactsAndLists();
         clearTemporaryContacts();
-        clearPresence();
+       // clearPresence();
     }
 
     /**

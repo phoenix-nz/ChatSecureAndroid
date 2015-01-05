@@ -1,24 +1,32 @@
 #!/bin/sh
 
-target="android-19"
+set -e
+
+if ! which android > /dev/null; then
+    if [ -z $ANDROID_HOME ]; then
+        if [ -e ~/.android/bashrc ]; then
+            . ~/.android/bashrc
+        else
+            echo "'android' not found, ANDROID_HOME must be set!"
+            exit
+        fi
+    else
+        export PATH="${ANDROID_HOME}/tools:$PATH"
+    fi
+fi
+
+# fetch target from project.properties
+eval `grep '^target=' project.properties`
+
 projectname=`sed -n 's,.*name="app_name">\(.*\)<.*,\1,p' res/values/strings.xml`
 
-# make sure your Android SDK tools path is set in SDK_BASE
-android update lib-project --path external/ActionBarSherlock/actionbarsherlock --target $target
-android update lib-project --path external/MemorizingTrustManager --target $target
-android update lib-project --path external/OnionKit/libonionkit --target $target
-android update lib-project --path external/AndroidPinning --target $target
-android update lib-project --path external/cacheword/cachewordlib --target $target
-android update lib-project --path external/SlidingMenu/library --target $target
-android update lib-project --path external/AndroidEmojiInput/library --target $target
-android update lib-project --path external/ViewPagerIndicator/library --target $target
+for lib in `sed -n 's,^android\.library\.reference\.[0-9][0-9]*=\(.*\),\1,p' project.properties`; do
+    android update lib-project --path $lib
+done
 
 android update project --path . --name $projectname --target $target --subprojects
 
-cp libs/android-support-v4.jar external/OnionKit/libonionkit/libs/android-support-v4.jar
-cp libs/android-support-v4.jar external/ActionBarSherlock/actionbarsherlock/libs/android-support-v4.jar
 cp libs/android-support-v4.jar external/SlidingMenu/library/libs/android-support-v4.jar
 cp libs/android-support-v4.jar external/cacheword/cachewordlib/libs/android-support-v4.jar
 cp libs/android-support-v4.jar external/ViewPagerIndicator/library/libs/android-support-v4.jar
-
-cp libs/sqlcipher.jar external/cacheword/cachewordlib/libs/sqlcipher.jar
+cp libs/android-support-v4.jar external/AndroidEmojiInput/library/libs/android-support-v4.jar

@@ -3,6 +3,7 @@ package info.guardianproject.otr.app.im.app;
 import java.util.Date;
 
 import info.guardianproject.otr.app.im.provider.Imps;
+import info.guardianproject.otr.app.im.service.ImServiceConstants;
 import info.guardianproject.otr.app.im.service.StatusBarNotifier;
 import info.guardianproject.util.Debug;
 import android.content.BroadcastReceiver;
@@ -21,18 +22,18 @@ import android.util.Log;
  * including on boot.
  */
 public class BootCompletedListener extends BroadcastReceiver {
-    
+
     private static final String LAST_BOOT_TRAIL_TAG = "last_boot";
     public final static String BOOTFLAG = "BOOTFLAG";
-    
+
     @Override
     public synchronized void onReceive(Context context, Intent intent) {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        
+
         Debug.recordTrail(context, LAST_BOOT_TRAIL_TAG, new Date());
-        boolean prefStartOnBoot = prefs.getBoolean("pref_start_on_boot", true); 
-        
+        boolean prefStartOnBoot = prefs.getBoolean("pref_start_on_boot", true);
+
         if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED"))
         {
             Debug.onServiceStart();
@@ -41,7 +42,12 @@ public class BootCompletedListener extends BroadcastReceiver {
                 if (Imps.isUnencrypted(context))
                 {
                     Log.d(ImApp.LOG_TAG, "autostart");
-                    new ImApp(context).startImServiceIfNeed(true);
+
+                    Intent serviceIntent = new Intent();
+                    serviceIntent.setComponent(ImServiceConstants.IM_SERVICE_COMPONENT);
+                    serviceIntent.putExtra(ImServiceConstants.EXTRA_CHECK_AUTO_LOGIN, true);
+                    context.startService(serviceIntent);
+
                     Log.d(ImApp.LOG_TAG, "autostart done");
                 }
                 else
@@ -52,12 +58,12 @@ public class BootCompletedListener extends BroadcastReceiver {
                 }
             }
         }
-        
-       
-        
+
+
+
     }
-    
-    
-    
-   
+
+
+
+
 }

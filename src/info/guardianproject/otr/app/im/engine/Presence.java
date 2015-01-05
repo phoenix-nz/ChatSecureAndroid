@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2007 Esmertec AG. Copyright (C) 2007 The Android Open Source
  * Project
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,16 +17,16 @@
 
 package info.guardianproject.otr.app.im.engine;
 
-import java.util.Collections;
-import java.util.Map;
-
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * A <code>Presence</code> is an abstract presentation of the user's presence
  * information.
- * 
+ *
  * Note that changes made to the Presence data won't be reflected to the server
  * until <code>ImConnection.updateUserPresence</code> is called. Only the logged
  * in user can update its own presence data via
@@ -34,11 +34,14 @@ import android.os.Parcelable;
  * presence data won't be saved or sent to the server.
  */
 public final class Presence implements Parcelable {
+    public static final int MIN_PRESENCE = 0;
     public static final int OFFLINE = 0;
     public static final int DO_NOT_DISTURB = 1;
     public static final int AWAY = 2;
     public static final int IDLE = 3;
     public static final int AVAILABLE = 4;
+    public static final int NOT_SUBSCRIBED = 5;
+    public static final int MAX_PRESENCE = 5;
 
     public static final int CLIENT_TYPE_DEFAULT = 0;
     public static final int CLIENT_TYPE_MOBILE = 1;
@@ -49,7 +52,7 @@ public final class Presence implements Parcelable {
     private String mAvatarType;
     private int mClientType;
     private String mResource;
-    
+
     private Map<String, String> mExtendedInfo;
 
     public Presence() {
@@ -88,7 +91,7 @@ public final class Presence implements Parcelable {
         // TODO - what ClassLoader should be passed to readMap?
         // TODO - switch to Bundle
         mExtendedInfo = source.readHashMap(null);
-        
+
         //this may not exist for older persisted presence data
         if (source.dataAvail() > 0)
             mResource = source.readString();
@@ -96,7 +99,7 @@ public final class Presence implements Parcelable {
 
     /**
      * Get avatar bitmap.
-     * 
+     *
      * @return Avatar bitmap. Note any changes made to the bitmap itself won't
      *         be saved or sent back to the server. To change avatar call
      *         <code>setAvatar</code> with a <b>new</b> bitmap instance. FIXME:
@@ -116,7 +119,7 @@ public final class Presence implements Parcelable {
 
     /**
      * Get the MIME type of avatar.
-     * 
+     *
      * @return the MIME type of avatar.
      */
     public String getAvatarType() {
@@ -140,7 +143,7 @@ public final class Presence implements Parcelable {
     }
 
     public void setStatus(int status) {
-        if (status < OFFLINE || status > AVAILABLE) {
+        if (status < MIN_PRESENCE || status > MAX_PRESENCE) {
             throw new IllegalArgumentException("invalid presence status value");
         }
         mStatus = status;
@@ -168,6 +171,7 @@ public final class Presence implements Parcelable {
         mClientType = clientType;
     }
 
+    @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(mStatus);
         dest.writeString(mStatusText);
@@ -178,25 +182,28 @@ public final class Presence implements Parcelable {
         dest.writeString(mResource);
     }
 
+    @Override
     public int describeContents() {
         return 0;
     }
 
     public static final Parcelable.Creator<Presence> CREATOR = new Parcelable.Creator<Presence>() {
+        @Override
         public Presence createFromParcel(Parcel source) {
             return new Presence(source);
         }
 
+        @Override
         public Presence[] newArray(int size) {
             return new Presence[size];
         }
     };
-    
+
     public String getResource ()
     {
         return mResource;
     }
-    
+
     public void setResource (String resource)
     {
         mResource = resource;

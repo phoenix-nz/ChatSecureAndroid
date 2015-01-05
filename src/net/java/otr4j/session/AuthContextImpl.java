@@ -1,9 +1,11 @@
 /*
  * otr4j, the open source java otr library.
- * 
+ *
  * Distributable under LGPL license. See terms of license at gnu.org.
  */
 package net.java.otr4j.session;
+
+import info.guardianproject.otr.AndroidLogHandler;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -37,6 +39,8 @@ class AuthContextImpl implements AuthContext {
     public AuthContextImpl(Session session) {
         this.setSession(session);
         this.reset();
+        logger.addHandler(new AndroidLogHandler());
+
     }
 
     private Session session;
@@ -66,6 +70,8 @@ class AuthContextImpl implements AuthContext {
     private Boolean isSecure = false;
     private int protocolVersion;
 
+    private static Logger logger = Logger.getLogger(AuthContextImpl.class.getName());
+
     private int getProtocolVersion() {
         return this.protocolVersion;
     }
@@ -73,8 +79,6 @@ class AuthContextImpl implements AuthContext {
     private void setProtocolVersion(int protoVersion) {
         this.protocolVersion = protoVersion;
     }
-
-    private static Logger logger = Logger.getLogger(AuthContextImpl.class.getName());
 
     class MessageFactory {
 
@@ -276,8 +280,8 @@ class AuthContextImpl implements AuthContext {
 
     public byte[] getExtraSymmetricKey() throws OtrException {
         return h2(EXTRA_SYMMETRIC_KEY);
-    } 
-    
+    }
+
     private byte[] getC() throws OtrException {
         if (c != null)
             return c;

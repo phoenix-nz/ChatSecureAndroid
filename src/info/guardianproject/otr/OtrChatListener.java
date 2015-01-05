@@ -1,6 +1,7 @@
 package info.guardianproject.otr;
 
 import info.guardianproject.otr.OtrDataHandler.Transfer;
+import info.guardianproject.otr.app.im.R;
 import info.guardianproject.otr.app.im.engine.ChatSession;
 import info.guardianproject.otr.app.im.engine.ImErrorInfo;
 import info.guardianproject.otr.app.im.engine.Message;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.java.otr4j.OtrException;
+import net.java.otr4j.session.SessionID;
 import net.java.otr4j.session.SessionStatus;
 import net.java.otr4j.session.TLV;
 
@@ -34,12 +36,11 @@ public class OtrChatListener implements MessageListener {
         String body = msg.getBody();
         String from = msg.getFrom().getAddress();
         String to = msg.getTo().getAddress();
-        
+
         body = Debug.injectErrors(body);
 
-        SessionStatus otrStatus = mOtrChatManager.getSessionStatus(to, from);
-
-//        OtrDebugLogger.log("session status: " + otrStatus.name());
+        SessionID sessionID = mOtrChatManager.getSessionId(to, from);
+        SessionStatus otrStatus = mOtrChatManager.getSessionStatus(sessionID);
 
         List<TLV> tlvs = new ArrayList<TLV>();
 
@@ -50,17 +51,20 @@ public class OtrChatListener implements MessageListener {
             }
 
             if (body != null) {
-                msg.setBody(body);                 
+                msg.setBody(body);
                 mMessageListener.onIncomingMessage(session, msg);
             }
-        
+
         } catch (OtrException e) {
-            
-            OtrDebugLogger.log("error decrypting message", e);            
-          //  msg.setBody("[You received an unreadable encrypted message]");
-          //  mMessageListener.onIncomingMessage(session, msg);
+
+         //   OtrDebugLogger.log("error decrypting message",e);
+
+           // msg.setBody("[" + "You received an unreadable encrypted message" + "]");
+           // mMessageListener.onIncomingMessage(session, msg);
+        //   mOtrChatManager.injectMessage(sessionID, "[error please stop/start encryption]");
+
         }
-        
+
         for (TLV tlv : tlvs) {
             if (tlv.getType() == TLV_DATA_REQUEST) {
                 mMessageListener.onIncomingDataRequest(session, msg, tlv.getValue());
@@ -73,10 +77,10 @@ public class OtrChatListener implements MessageListener {
         if (newStatus != otrStatus) {
             mMessageListener.onStatusChanged(session, newStatus);
         }
-        
+
         return true;
     }
-    
+
     @Override
     public void onIncomingDataRequest(ChatSession session, Message msg, byte[] value) {
         throw new UnsupportedOperationException();
@@ -103,7 +107,7 @@ public class OtrChatListener implements MessageListener {
     public void onMessagePostponed(ChatSession ses, String id) {
         mMessageListener.onMessagePostponed(ses, id);
     }
-    
+
     @Override
     public void onReceiptsExpected(ChatSession ses) {
         mMessageListener.onReceiptsExpected(ses);
@@ -113,7 +117,7 @@ public class OtrChatListener implements MessageListener {
     public void onStatusChanged(ChatSession session, SessionStatus status) {
         mMessageListener.onStatusChanged(session, status);
     }
-    
+
     @Override
     public void onIncomingTransferRequest(Transfer transfer) {
         mMessageListener.onIncomingTransferRequest(transfer);
