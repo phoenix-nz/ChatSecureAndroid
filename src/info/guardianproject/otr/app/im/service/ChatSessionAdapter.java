@@ -31,6 +31,7 @@ import info.guardianproject.otr.app.im.engine.ChatGroup;
 import info.guardianproject.otr.app.im.engine.ChatGroupManager;
 import info.guardianproject.otr.app.im.engine.ChatSession;
 import info.guardianproject.otr.app.im.engine.Contact;
+import info.guardianproject.otr.app.im.engine.ContactListManager;
 import info.guardianproject.otr.app.im.engine.GroupListener;
 import info.guardianproject.otr.app.im.engine.GroupMemberListener;
 import info.guardianproject.otr.app.im.engine.ImConnection;
@@ -153,7 +154,7 @@ public class ChatSessionAdapter extends info.guardianproject.otr.app.im.IChatSes
 
                 // add OtrChatListener as the intermediary to mListenerAdapter so it can filter OTR msgs
                 mChatSession.setMessageListener(new OtrChatListener(cm, mListenerAdapter));
-                mChatSession.setOtrChatManager(cm);
+               // mChatSession.setOtrChatManager(cm);
             }
         }
         catch (NullPointerException npe)
@@ -191,6 +192,7 @@ public class ChatSessionAdapter extends info.guardianproject.otr.app.im.IChatSes
         mIsGroupChat = false;
         ContactListManagerAdapter listManager = (ContactListManagerAdapter) mConnection
                 .getContactListManager();
+        
         mContactId = listManager.queryOrInsertContact(contact);
 
         mMessageURI = Imps.Messages.getContentUriByThreadId(mContactId);
@@ -422,8 +424,8 @@ public class ChatSessionAdapter extends info.guardianproject.otr.app.im.IChatSes
             values.put(Imps.Chats.LAST_UNREAD_MESSAGE, (String) null);
             mConnection.getContext().getContentResolver().update(mChatURI, values, null, null);
 */
-
-            mStatusBarNotifier.dismissChatNotification(mConnection.getProviderId(), getAddress());
+            String baseUsername = mChatSession.getParticipant().getAddress().getBareAddress();
+            mStatusBarNotifier.dismissChatNotification(mConnection.getProviderId(), baseUsername);
 
             mHasUnreadMessages = false;
         }
@@ -629,7 +631,7 @@ public class ChatSessionAdapter extends info.guardianproject.otr.app.im.IChatSes
 
             insertOrUpdateChat(body);
 
-            insertMessageInDb(username, body, time, msg.getType());
+            insertMessageInDb(bareUsername, body, time, msg.getType());
 
             boolean wasMessageSeen = false;
 

@@ -314,9 +314,9 @@
 		<string name="contact_filter_hint">Type to find contact</string>
 		<string name="empty_contact_list">No contacts found.\n\nTap to invite.</string>
 		
-		<string name="subscription_prompt"><xliff:g id="user">%1$s</xliff:g> has invited you to be on their Contact list.</string>
-		<string name="approve_subscription">Accept</string>
-		<string name="decline_subscription">Decline</string>
+		<string name="subscription_prompt">Add <xliff:g id="USER">%1$s</xliff:g>?</string>
+		<string name="approve_subscription">Yes</string>
+		<string name="decline_subscription">No</string>
 		<string name="approve_subscription_error">Unable to approve subscription from <xliff:g id="user">%1$s</xliff:g>. Please try again later.</string>
 		<string name="decline_subscription_error">Unable to decline subscription from <xliff:g id="user">%1$s</xliff:g>. Please try again later.</string>
 		
@@ -381,6 +381,8 @@
 		<string name="pref_cacheword_timeout_summary">Time that app encryption should say unlocked</string>
 		
 		<!-- Actions: Settings: General: User Interface -->
+		<string name="pref_linkify_on_tor_title">Clickable links on Tor</string>
+		<string name="pref_linkify_on_tor_summary">For accounts using Tor, make the links in chats clickable (WARNING, possible privacy leak!)</string>
 		<string name="pref_group_looknfeel_title">User Interface</string>
 		<string name="menu_locale">Language</string>
 		<string name="KEY_PREF_LANGUAGE_TITLE">Languages</string>
@@ -446,7 +448,7 @@
 		<string name="newMessages_label">New <xliff:g id="provider">%1$s</xliff:g> messages</string>
 		<string name="num_unread_chats"><xliff:g id="number">%1$d</xliff:g> unread chats</string>
 		<string name="subscription_notify_text">New friend invitation from <xliff:g id="user">%s</xliff:g></string>
-		<string name="file_notify_text">New file <xliff:g id="filename">%s</xliff:g> from <xliff:g id="user">%s</xliff:g></string>
+		<string name="file_notify_text">New file <xliff:g id="filename">%1$s</xliff:g> from <xliff:g id="user">%2$s</xliff:g></string>
 		<string name="notify_groupchat_label">Group chat invitation</string>
 		<string name="group_chat_invite_notify_text">New group chat invitation from <xliff:g id="user">%s</xliff:g></string>
 		<string name="new_messages_notify">New message(s) from</string>
@@ -520,8 +522,7 @@
 		<string name="error_chat_file_transfer_title">Transfer Error</string>
 		<string name="error_chat_file_transfer_body">Unable to read file to storage</string>
 		<string name="error_welcome_database">Major Error: Unable to unlock or load app database. Please re-install the app or clear data.</string>
-	
-	   
+		<string name="error_no_app_to_handle_url">No app installed that can handle that link!</string>
 
 	<string name="account_settings_title">Account Settings</string>
 	<string name="pref_default_locale">defLoc</string>
@@ -700,9 +701,7 @@
 			<string name="unable_to_securely_share_this_file">Unable to securely share this file</string>
 			
 			<string name="install_orbot_">Install Orbot?</string>
-	
-		<string name="market_orbot">market://details?id=org.torproject.android</string>
-		
+
 		<string name="you_must_have_orbot">You must have Orbot installed and activated to proxy traffic through it. Would you like to install it?</string>
 		
 		<string name="always">Always</string>

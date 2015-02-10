@@ -1113,13 +1113,17 @@ public class ContactListManagerAdapter extends
         String username = mAdaptee.normalizeAddress(contact.getAddress().getAddress());
 
         //if list is provided, then delete from one list
-        if (list != null)
+        if (list != null && list.getAddress() != null)
         {
             String selection = Imps.Contacts.USERNAME + "=? AND " + Imps.Contacts.CONTACTLIST + "=?";
-            long listId = getContactListAdapter(list.getAddress()).getDataBaseId();
-            String[] selectionArgs = { username, Long.toString(listId) };
-            mResolver.delete(mContactUrl, selection, selectionArgs);
-
+            ContactListAdapter cla = getContactListAdapter(list.getAddress());
+            
+            if (cla != null)
+            {
+                long listId = getContactListAdapter(list.getAddress()).getDataBaseId();
+                String[] selectionArgs = { username, Long.toString(listId) };
+                mResolver.delete(mContactUrl, selection, selectionArgs);
+            }
         }
         else //if it is null, delete from all
         {
@@ -1199,26 +1203,27 @@ public class ContactListManagerAdapter extends
     public static int convertPresenceStatus(Presence presence) {
         switch (presence.getStatus()) {
         case Presence.AVAILABLE:
-            return Imps.Presence.AVAILABLE;
+            return Presence.AVAILABLE;
 
         case Presence.IDLE:
-            return Imps.Presence.IDLE;
+            return Presence.IDLE;
 
         case Presence.AWAY:
-            return Imps.Presence.AWAY;
+            return Presence.AWAY;
 
         case Presence.DO_NOT_DISTURB:
-            return Imps.Presence.DO_NOT_DISTURB;
+            return Presence.DO_NOT_DISTURB;
 
         case Presence.OFFLINE:
-            return Imps.Presence.OFFLINE;
+            return Presence.OFFLINE;
         }
 
         // impossible...
         RemoteImService.debug("Illegal presence status value " + presence.getStatus());
-        return Imps.Presence.AVAILABLE;
+        return Presence.AVAILABLE;
     }
 
+    
     public void clearOnLogout() {
         clearValidatedContactsAndLists();
         clearTemporaryContacts();

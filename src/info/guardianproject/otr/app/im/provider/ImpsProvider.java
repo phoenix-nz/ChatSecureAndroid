@@ -17,7 +17,10 @@
 package info.guardianproject.otr.app.im.provider;
 
 import info.guardianproject.otr.OtrAndroidKeyManagerImpl;
+import info.guardianproject.otr.app.im.app.ContactView;
 import info.guardianproject.otr.app.im.app.ImApp;
+import info.guardianproject.otr.app.im.provider.Imps.Contacts;
+import info.guardianproject.otr.app.im.provider.Imps.Provider;
 import info.guardianproject.util.Debug;
 import info.guardianproject.util.LogCleaner;
 
@@ -262,7 +265,7 @@ public class ImpsProvider extends ContentProvider {
         boolean mInMemoryDB = false;
         String mKey = null;
 
-        boolean doCleanup = true;
+        boolean doCleanup = false;
         
         DatabaseHelper(Context context, String key, boolean inMemoryDb) throws Exception {
             super(context, mDatabaseName, null, mDatabaseVersion);
@@ -297,7 +300,8 @@ public class ImpsProvider extends ContentProvider {
                 
                 
                 doCleanup = false;
-            }*/
+            }
+            */
             
             return dbWrite;
         }
@@ -1925,6 +1929,13 @@ public class ImpsProvider extends ContentProvider {
             ContentValues presenceValues = new ContentValues();
             presenceValues.put(Imps.Presence.PRESENCE_STATUS, Imps.Presence.OFFLINE);
 
+            StringBuffer whereClause = new StringBuffer();
+            whereClause.append(Contacts.USERNAME);
+            whereClause.append("=?");
+            whereClause.append(" AND ");
+            whereClause.append(Contacts.ACCOUNT);
+            whereClause.append("=?");
+            
             for (int i = 0; i < usernameCount; i++) {
                 String username = usernames.get(i);
                 String nickname = nicknames.get(i);
@@ -1998,23 +2009,37 @@ public class ImpsProvider extends ContentProvider {
                     }
                 }
                 */
-
-                rowId = db.insert(TABLE_CONTACTS, USERNAME, contactValues);
-                if (rowId > 0) {
-                    sum++;
-
-                    // seed the presence for the new contact
-                    
-                        log("### seedPresence for contact id " + rowId);
-                    presenceValues.put(Imps.Presence.CONTACT_ID, rowId);
-
-                    try {
-                        db.insert(TABLE_PRESENCE, null, presenceValues);
-                    } catch (android.database.sqlite.SQLiteConstraintException ex) {
-                        LogCleaner.warn(LOG_TAG, "insertBulkContacts: seeding presence caught " + ex);
+                
+                String[] columns = {"_id, username"};
+                String[] whereArgs = {username,account+""};
+                
+                Cursor c = db.query(TABLE_CONTACTS,  columns, whereClause.toString(), whereArgs, null,null,null,null);
+                boolean contactExists = (c != null && c.getCount() > 0);
+                if (c != null) c.close();
+                
+                if (contactExists) 
+                {
+                    int rowsUpdated = db.update(TABLE_CONTACTS, contactValues, whereClause.toString(), whereArgs);
+                }
+                else
+                {
+                    rowId = db.insert(TABLE_CONTACTS, USERNAME, contactValues);
+                    if (rowId > 0) {
+                        sum++;
+    
+                        // seed the presence for the new contact
+                        
+                            log("### seedPresence for contact id " + rowId);
+                        presenceValues.put(Imps.Presence.CONTACT_ID, rowId);
+    
+                        try {
+                            db.insert(TABLE_PRESENCE, null, presenceValues);
+                        } catch (android.database.sqlite.SQLiteConstraintException ex) {
+                            LogCleaner.warn(LOG_TAG, "insertBulkContacts: seeding presence caught " + ex);
+                        }
                     }
                 }
-
+                
                 // yield the lock if anyone else is trying to
                 // perform a db operation here.
                 db.yieldIfContended();
@@ -2436,7 +2461,7 @@ public class ImpsProvider extends ContentProvider {
         case MATCH_CONTACTS:
         case MATCH_CONTACTS_BAREBONE:
             // Insert into the contacts table
-            rowID = db.insert(TABLE_CONTACTS, "username", initialValues);
+            rowID = db.insert(TABLE_CONTACTS, USERNAME, initialValues);
             if (rowID > 0) {
                 resultUri = Uri.parse(Imps.Contacts.CONTENT_URI + "/" + rowID);
             }

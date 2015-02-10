@@ -36,12 +36,12 @@
           app:showAsAction="always"
            android:id="@+id/menu_otr"
         />
-        
+        <!-- 
              <item android:id="@+id/menu_verify_or_view"
         android:title="@string/menu_verify"
         android:icon="@drawable/ic_white_encrypted_not_verified"
          app:showAsAction="always"
-         />
+         /> -->
              
         </menu>
          </item>
@@ -190,14 +190,6 @@
                 app:showAsAction="never"
         
         />
-     
-    
-     
-     
-     
-        </group>
-        
-   
       <item android:id="@+id/menu_view_accounts"
         android:title="@string/menu_add_account"
                 app:showAsAction="never"
@@ -210,6 +202,18 @@
                  app:showAsAction="never|withText"
          
          />
+    
+     
+      <item android:id="@+id/menu_exit"
+        android:title="@string/menu_exit"
+                app:showAsAction="never"
+        />
+     
+     
+        </group>
+        
+   
+     
      
   <item android:id="@+id/menu_settings"
         android:title="@string/menu_settings" 
@@ -218,9 +222,5 @@
          />
      
       
-      <item android:id="@+id/menu_exit"
-        android:title="@string/menu_exit"
-                app:showAsAction="never"
-        />
   
 </menu>
